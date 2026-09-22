@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<!--
+    Confirm dialog — the modal you reach for instead of confirm()
+    (design-system.md §7 bans alert()/confirm() outright). Opens and closes
+    through the same shared JS as components/modal.html.
+
+    th:fragment="confirmDialog(id, title, message, confirmText, cancelText, confirmAction, danger)"
+
+    id             unique string, e.g. 'confirm-delete-book-42'. A trigger
+                   button elsewhere on the page needs
+                   data-modal-trigger="theId".
+    title          e.g. "Remove this book?".
+    message        one or two sentences — say what happens, not just "sure?".
+    confirmText    button label, default 'Confirm'.
+    cancelText     button label, default 'Cancel'.
+    confirmAction  the URL the Confirm button POSTs to. Spring Security's
+                   CSRF token is added automatically because this is a
+                   normal th:action form — no extra dependency needed
+                   (see com.lms.common.security.SecurityConfig).
+    danger         boolean — true paints Confirm with the --overdue token
+                   (component class .btn--danger) instead of --primary, for
+                   an action that cannot be undone (delete, write off,
+                   deactivate). Leave false for a confirmation that is just
+                   "the system needs a moment of your attention", not a
+                   destructive one.
+
+    One dialog performs exactly one action against one URL. A row that can
+    be deleted needs its own dialog instance (its own `id`, its own
+    `confirmAction` carrying that row's id) — this is not a single shared
+    dialog reused by swapping its target, since the id has to already be in
+    the confirmAction URL before the page renders.
+-->
+<div th:fragment="confirmDialog(id, title, message, confirmText, cancelText, confirmAction, danger)"
+     class="modal-backdrop" th:data-modal="${id}" hidden>
+    <div class="modal" role="alertdialog" aria-modal="true" th:aria-labelledby="${id + '-title'}">
+        <div class="modal__header">
+            <h2 class="modal__title" th:id="${id + '-title'}" th:text="${title}">Are you sure?</h2>
+            <button type="button" class="icon-btn" data-modal-close aria-label="Close">
+                <svg class="icon" aria-hidden="true"><use href="/icons.svg#icon-x"></use></svg>
+            </button>
+        </div>
+        <div class="modal__body">
+            <p th:text="${message}">This cannot be undone.</p>
+        </div>
+        <div class="modal__footer">
+            <button type="button" class="btn btn--secondary" data-modal-close th:text="${cancelText} ?: 'Cancel'">Cancel</button>
+            <form th:action="${confirmAction}" method="post">
+                <button type="submit" th:class="${danger} ? 'btn btn--danger' : 'btn btn--primary'"
+                        th:text="${confirmText} ?: 'Confirm'">Confirm</button>
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+</html>

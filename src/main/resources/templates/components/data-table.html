@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<!--
+    Data table. th:fragment="dataTable(columns, rows, rowFragment, currentSort,
+    currentDir, emptyIcon, emptyText, emptyActionText, emptyActionHref)".
+
+    columns          List<com.lms.common.web.DataTableColumn> — one header
+                      per column. Build it with DataTableColumn.left(...) /
+                      .right(...); see that class's javadoc.
+    rows             the list of domain objects to render. Only its size is
+                      read here (for the empty-state switch) — see rowFragment.
+    rowFragment      a fragment expression for ONE <tr>, e.g.
+                      ~{catalogue/books :: bookRow}. See "THE ROW FRAGMENT
+                      CONTRACT" below — this is the one non-obvious part of
+                      using this component.
+    currentSort      the sortKey of the column currently sorted by, or null.
+    currentDir       'asc' or 'desc'. Ignored if currentSort is null.
+    emptyIcon        icon id (without the "icon-" prefix) for the empty state.
+    emptyText        one sentence for the empty state.
+    emptyActionText,
+    emptyActionHref  optional — omit both for no action button.
+
+    THE ROW FRAGMENT CONTRACT
+    This fragment does not know how to render your row — a Loan row needs a
+    book title in serif, a member name, a status pill, a mono due date; a
+    Fine row needs completely different cells. Rather than a table that only
+    ever renders generic cells, you write the <tr> yourself as your own
+    fragment, and this component's th:each hands it one `row` variable per
+    iteration:
+
+        <!-- catalogue/books.html -->
+        <tr th:fragment="bookRow">
+            <td><span class="book-title" th:text="${row.title}">Title</span></td>
+            <td class="font-mono" th:text="${row.isbn13}">ISBN</td>
+            <td th:replace="~{components/status-pill :: statusPill('bookCopy', ${row.status})}"></td>
+        </tr>
+
+    Your fragment must NOT declare its own parameters (no "bookRow(row)") —
+    call it as ~{catalogue/books :: bookRow}, no parentheses. A Thymeleaf
+    fragment referenced without parameters inherits every local variable
+    visible at its call site, `row` from this table's th:each included; an
+    explicit parameter list would shut that inheritance off and `row` would
+    be undefined. See templates/components/README.md for the full example,
+    controller and all.
+
+    SORT LINKS reset the query string to just ?sort=…&dir=… — they do not
+    preserve other parameters (like a search box's ?q=). A screen that
+    filters AND sorts needs to build its own links; ask whoever owns that
+    screen before copying this note somewhere it doesn't apply.
+-->
+<div th:fragment="dataTable(columns, rows, rowFragment, currentSort, currentDir, emptyIcon, emptyText, emptyActionText, emptyActionHref)">
+
+    <div th:if="${not #lists.isEmpty(rows)}" class="data-table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th th:each="col : ${columns}" scope="col"
+                        th:classappend="${col.align() == 'right'} ? 'data-table__col-right' : ''"
+                        th:with="sortable=${col.sortable()},
+                                 active=${sortable and #strings.equals(col.sortKey(), currentSort)},
+                                 nextDir=${#strings.equals(currentDir, 'asc')} ? 'desc' : 'asc',
+                                 ariaSortValue=${not sortable} ? null : (${not active} ? 'none' : (${#strings.equals(currentDir, 'desc')} ? 'descending' : 'ascending'))"
+                        th:aria-sort="${ariaSortValue}">
+                        <a th:if="${sortable}" class="data-table__sort"
+                           th:href="@{''(sort=${col.sortKey()}, dir=${active} ? ${nextDir} : 'asc')}">
+                            <span th:text="${col.label()}">Label</span>
+                            <svg class="icon" aria-hidden="true">
+                                <use th:if="${active and #strings.equals(currentDir, 'asc')}" href="/icons.svg#icon-chevron-up"></use>
+                                <use th:if="${active and #strings.equals(currentDir, 'desc')}" href="/icons.svg#icon-chevron-down"></use>
+                                <use th:unless="${active}" href="/icons.svg#icon-chevrons-up-down"></use>
+                            </svg>
+                        </a>
+                        <span th:unless="${sortable}" th:text="${col.label()}">Label</span>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- th:each on its own wrapper, th:replace on the <tr>, not
+                     both on the same tag — combining them on one tag left
+                     `row` unresolved inside rowFragment in testing, even
+                     though it reads as though it should work. Splitting
+                     them across parent/child is the version that actually
+                     renders correctly. th:block leaves no trace in the
+                     output, so the real markup is still <tbody><tr>…</tr>…
+                     with nothing in between. -->
+                <th:block th:each="row : ${rows}">
+                    <tr th:replace="${rowFragment}"></tr>
+                </th:block>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- th:if on its own wrapper, th:replace on the child — combining them
+         on one tag rendered the empty state unconditionally in testing
+         (same reason as the th:each split above: don't combine th:if with
+         th:insert/th:replace on a single tag in this Thymeleaf version). -->
+    <div th:if="${#lists.isEmpty(rows)}">
+        <div th:replace="~{components/empty-state :: emptyState(${emptyIcon}, ${emptyText}, ${emptyActionText}, ${emptyActionHref})}"></div>
+    </div>
+</div>
+</body>
+</html>

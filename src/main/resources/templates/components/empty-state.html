@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<!--
+    Empty state: line icon + one sentence + an optional primary action.
+    th:fragment="emptyState(icon, text, actionText, actionHref)".
+
+    icon              icon id without the "icon-" prefix, e.g. 'inbox'.
+    text              one sentence — what's missing, not an apology.
+    actionText,
+    actionHref        both optional. Omit either one and no button renders.
+
+    Used on its own (a panel with nothing to show) and automatically by
+    components/data-table.html when its `rows` list is empty.
+-->
+<div th:fragment="emptyState(icon, text, actionText, actionHref)" class="empty-state">
+    <svg class="icon empty-state__icon" aria-hidden="true"><use th:href="${'/icons.svg#icon-' + icon}"></use></svg>
+    <p class="empty-state__text" th:text="${text}">Nothing here yet.</p>
+    <a th:if="${actionText != null and actionHref != null}"
+       th:href="${actionHref}" class="btn btn--primary" th:text="${actionText}">Action</a>
+</div>
+</body>
+</html>

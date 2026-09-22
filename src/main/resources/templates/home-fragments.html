@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<!--
+    Page-specific fragments for home.html — the "Recent Activity" row and
+    the demo modal's body/footer.
+
+    Why these live in their OWN file instead of inside home.html itself:
+    home.html is a real page, returned directly by HomeController, so
+    Thymeleaf renders it top-to-bottom on every request. A th:fragment
+    sitting inside a page that IS rendered directly still renders in its
+    own declared position too — fragment declaration doesn't hide content
+    from normal processing. For demoModalBody/-Footer that would just be a
+    harmless, invisible duplicate; for activityRow it's a hard error,
+    because `row` only exists inside data-table's own th:each — outside
+    that loop, at this fragment's declared position, `row` is undefined.
+
+    A file that no controller ever returns as a view name — like this one,
+    like every file in components/ — is never rendered on its own, only
+    ever reached via th:insert/th:replace from somewhere that DOES supply
+    the variables the fragment needs. That's the same reason
+    layout/base.html and components/*.html are separate files rather than
+    living inside whichever page happens to use them first.
+-->
+
+<!-- data-table's row fragment for home.html's "Recent Activity" table.
+     No parameters: reads `row` from data-table's own th:each — see
+     components/README.md's "data-table" section. -->
+<tr th:fragment="activityRow">
+    <td><span class="book-title" th:text="${row.bookTitle}">Title</span></td>
+    <td th:text="${row.memberName}">Member</td>
+    <td><span th:replace="~{components/status-pill :: statusPill(${row.statusDomain}, ${row.status})}"></span></td>
+    <td class="data-table__col-right font-mono"
+        th:text="${row.dueDate} ? ${#temporals.format(row.dueDate, 'yyyy-MM-dd')} : '—'">2026-09-15</td>
+</tr>
+
+<!-- The "Renew loan" demo modal's body and footer — see components/README.md's
+     "modal / confirm-dialog" section. Both read ${demoForm}, a top-level
+     model attribute from HomeController, so — unlike activityRow — nothing
+     here would actually crash if this file were ever rendered directly;
+     it stays out of home.html purely to avoid the duplicate-render issue
+     explained above. -->
+<div th:fragment="demoModalBody">
+    <!-- form-field needs a th:object to bind against. This form never
+         actually submits in the demo; Confirm in the footer below just
+         closes the modal (type="button", data-modal-close). -->
+    <form th:object="${demoForm}">
+        <div th:replace="~{components/form-field :: formField('demoDays', 'Extension (days)', 'number',
+                'Maximum 2 renewals per loan; blocked if another member is waiting.', true, null, null, null)}"></div>
+    </form>
+</div>
+<div th:fragment="demoModalFooter">
+    <button type="button" class="btn btn--secondary" data-modal-close>Cancel</button>
+    <button type="button" class="btn btn--primary" data-modal-close>Confirm renewal</button>
+</div>
+
+</body>
+</html>

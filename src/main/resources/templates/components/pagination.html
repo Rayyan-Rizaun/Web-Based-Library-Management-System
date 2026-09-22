@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<!--
+    Pagination — server-side, shows range and total (design-system.md §5).
+    th:fragment="pagination(page, totalPages, totalItems, pageSize)".
+
+    page        current page, 1-based.
+    totalPages  total number of pages.
+    totalItems  total number of rows across all pages (for "of 214").
+    pageSize    rows per page (for "Showing 21–40").
+
+    Same limitation as data-table's sort links: page links carry only
+    ?page=N. A screen that also filters needs its own links; see
+    data-table.html's header comment.
+-->
+<nav th:fragment="pagination(page, totalPages, totalItems, pageSize)" class="pagination" aria-label="Pagination"
+     th:with="firstItem=${totalItems == 0 ? 0 : (page - 1) * pageSize + 1},
+              lastItem=${totalItems == 0 ? 0 : T(java.lang.Math).min(page * pageSize, totalItems)},
+              windowStart=${T(java.lang.Math).max(1, page - 2)},
+              windowEnd=${T(java.lang.Math).min(totalPages, page + 2)}">
+
+    <p class="pagination__range">
+        Showing <span class="font-mono" th:text="${firstItem} + '–' + ${lastItem}">1–20</span>
+        of <span class="font-mono" th:text="${totalItems}">214</span>
+    </p>
+
+    <div class="pagination__controls">
+        <a th:if="${page > 1}" th:href="@{''(page=${page - 1})}" class="icon-btn" aria-label="Previous page">
+            <svg class="icon" aria-hidden="true"><use href="/icons.svg#icon-chevron-left"></use></svg>
+        </a>
+        <button th:unless="${page > 1}" type="button" class="icon-btn" disabled aria-label="Previous page">
+            <svg class="icon" aria-hidden="true"><use href="/icons.svg#icon-chevron-left"></use></svg>
+        </button>
+
+        <a th:each="p : ${#numbers.sequence(windowStart, windowEnd)}"
+           th:href="@{''(page=${p})}"
+           th:text="${p}"
+           class="pagination__page"
+           th:classappend="${p == page} ? 'is-current' : ''"
+           th:attr="aria-current=${p == page} ? 'page' : null">1</a>
+
+        <a th:if="${page < totalPages}" th:href="@{''(page=${page + 1})}" class="icon-btn" aria-label="Next page">
+            <svg class="icon" aria-hidden="true"><use href="/icons.svg#icon-chevron-right"></use></svg>
+        </a>
+        <button th:unless="${page < totalPages}" type="button" class="icon-btn" disabled aria-label="Next page">
+            <svg class="icon" aria-hidden="true"><use href="/icons.svg#icon-chevron-right"></use></svg>
+        </button>
+    </div>
+</nav>
+</body>
+</html>

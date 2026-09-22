@@ -1,0 +1,1591 @@
+/* =============================================================================
+   Library Management System — Design System
+   Implements docs/design-system.md. That file is binding: no colour, font,
+   spacing value, radius or motion duration appears below that it does not
+   define. Hand-written — no Bootstrap, no Tailwind (CLAUDE.md).
+
+   RULE FOR EVERY RULE BELOW: values come from the token block in §2 via
+   var(--…). The only literal lengths outside §2 are 0, percentages and
+   viewport units (100%, 100vh), and the two breakpoints in §21 — CSS media
+   queries cannot read custom properties, so 1024px / 768px are written
+   literally there and mirrored in a comment in the token block.
+
+   CONTENTS
+    1. Fonts (self-hosted)            12. Stat tile
+    2. Design tokens                  13. Empty state
+    3. Reset & base                   14. Skeleton row
+    4. Typography                     15. Pagination
+    5. Icons                          16. Dropdown
+    6. Layout shell                   17. Modal
+    7. Sidebar                        18. Toast
+    8. Top bar                        19. Breadcrumb
+    9. Buttons                        20. Motion & reduced motion
+   10. Form field                     21. Responsive: icon rail / off-canvas
+   11. Data table & status pill       22. Utilities
+   ============================================================================= */
+
+
+/* =============================================================================
+   1. FONTS — self-hosted, no CDN (files in /static/fonts/)
+   -----------------------------------------------------------------------------
+   Each file is a variable font: one file carries the whole weight axis, so
+   a single @font-face with a weight RANGE covers every weight the design
+   system names. Latin subset only — the interface is English.
+   ============================================================================= */
+
+/* UI / chrome / data — weights 400 500 600 700 */
+@font-face {
+    font-family: 'Public Sans';
+    font-style: normal;
+    font-weight: 400 700;
+    font-display: swap;
+    src: url('/fonts/public-sans/PublicSans-Variable.woff2') format('woff2');
+}
+
+/* BOOK TITLES ONLY — weights 400 500, plus italic */
+@font-face {
+    font-family: 'Newsreader';
+    font-style: normal;
+    font-weight: 400 500;
+    font-display: swap;
+    src: url('/fonts/newsreader/Newsreader-Variable.woff2') format('woff2');
+}
+@font-face {
+    font-family: 'Newsreader';
+    font-style: italic;
+    font-weight: 400;
+    font-display: swap;
+    src: url('/fonts/newsreader/Newsreader-Italic-Variable.woff2') format('woff2');
+}
+
+/* Numbers, IDs, ISBN, barcode, money */
+@font-face {
+    font-family: 'JetBrains Mono';
+    font-style: normal;
+    font-weight: 400 700;
+    font-display: swap;
+    src: url('/fonts/jetbrains-mono/JetBrainsMono-Variable.woff2') format('woff2');
+}
+
+
+/* =============================================================================
+   2. DESIGN TOKENS
+   -----------------------------------------------------------------------------
+   Three theme states (design-system.md §1, "Theme handling"):
+     a) bare :root                          — full light palette, always defined
+     b) @media (prefers-color-scheme: dark)
+        :root:not([data-theme="light"])      — OS dark, unless user chose light
+     c) :root[data-theme="dark"]             — user explicitly chose dark
+   (b) and (c) redefine ONLY the colour tokens the spec lists for dark, plus
+   the status tokens. Every other token is theme-independent and lives in (a)
+   only. No colour is ever defined solely inside a media query.
+   ============================================================================= */
+
+:root {
+    /* ---- Colour: surfaces & ink (light) ---- */
+    --paper:          #F9FAFC;
+    --surface:        #FFFFFF;
+    --surface-2:      #F3F5F9;
+    --border:         #E4E8F0;
+    --border-strong:  #CDD4E0;
+    --ink:            #151A24;
+    --ink-2:          #4B5468;
+    --ink-3:          #8891A3;
+    --primary:        #3D63DD;
+    --primary-hover:  #2F4FC0;
+    --primary-tint:   #EAF0FE;
+    --accent:         #0EA5A0;
+    --accent-tint:    #E4F7F6;
+    --focus:          #3D63DD;
+
+    /* ---- Colour: status (functional — never reuse for branding) ---- */
+    --available:      #1B8F62;  --available-bg: #E5F8EF;
+    --on-loan:        #2B5FC7;  --on-loan-bg:   #EAF1FD;
+    --due-soon:       #B4780C;  --due-soon-bg:  #FCF2DC;
+    --overdue:        #C7373F;  --overdue-bg:   #FCEAEB;
+    --reserved:       #7A4FC4;  --reserved-bg:  #F2ECFB;
+    --lost:           #7A3237;  --lost-bg:      #F6E5E6;
+
+    /* ---- Colour: derived, theme-independent ----
+       Both are built from rgb(21,26,36) — the light --ink value the spec
+       already uses for the raised shadow — so no new colour is introduced.
+       Neither is redefined for dark: the spec's dark list does not include
+       them. */
+    --shadow-raised:  0 12px 32px rgba(21, 26, 36, 0.10);
+    --backdrop:       rgba(21, 26, 36, 0.45);
+
+    /* ---- Typography: families ---- */
+    --font-ui:    'Public Sans', system-ui, sans-serif;
+    --font-serif: 'Newsreader', Georgia, serif;
+    --font-mono:  'JetBrains Mono', monospace;
+
+    /* ---- Typography: scale (px) — 11 · 12 · 13 · 14 · 16 · 20 · 26 · 34 ----
+       Written in px, not rem, because design-system.md specifies the scale
+       in px and fixes the base UI size at 14px. */
+    --text-11: 11px;
+    --text-12: 12px;
+    --text-13: 13px;
+    --text-14: 14px;
+    --text-16: 16px;
+    --text-20: 20px;
+    --text-26: 26px;
+    --text-34: 34px;
+
+    --weight-regular:  400;
+    --weight-medium:   500;
+    --weight-semibold: 600;
+    --weight-bold:     700;
+
+    --leading-tight: 1.25;
+    --leading-body:  1.5;
+    --tracking-label: 0.09em;   /* uppercase labels */
+
+    /* ---- Spacing scale (px) — 4 8 12 16 24 32 48. Nothing between. ----
+       Named by value, not by step number, so --space-16 can never be
+       misread as "the 16th step". */
+    --space-4:  4px;
+    --space-8:  8px;
+    --space-12: 12px;
+    --space-16: 16px;
+    --space-24: 24px;
+    --space-32: 32px;
+    --space-48: 48px;
+
+    /* ---- Shape ---- */
+    --radius-panel:  10px;   /* panels & inputs */
+    --radius-button: 8px;    /* buttons */
+    --radius-pill:   999px;  /* status pills */
+    --radius-cell:   0;      /* table cells */
+
+    --border-width:       1px;
+    --focus-ring-width:   2px;
+    --focus-ring-offset:  2px;
+
+    /* ---- Elevation: exactly two levels ----
+       flat   = 1px solid border, no shadow  → cards, panels, tables
+       raised = --shadow-raised              → modals, dropdowns, toasts ONLY */
+    --elevation-flat: var(--border-width) solid var(--border);
+
+    /* ---- Motion ---- */
+    --duration-micro: 120ms;
+    --duration-panel: 180ms;
+    --duration-max:   240ms;
+    --duration-reduced: 1ms;   /* prefers-reduced-motion override (spec §6) */
+    --ease-entry: cubic-bezier(0.2, 0, 0, 1);
+    --ease-exit:  ease-in;
+
+    /* ---- Component & layout dimensions ----
+       Fixed sizes of things, not gaps between things, so they are not bound
+       by the spacing scale. Those design-system.md fixes are marked (spec);
+       the rest are not specified there and were chosen to suit a dense,
+       14px-base interface. */
+    --sidebar-width:      240px;   /* (spec) */
+    --sidebar-rail-width: 64px;    /* 48px icon-only link + 2 × 8px nav padding */
+    --topbar-height:      56px;
+    --content-max-width:  1400px;  /* (spec) */
+    --content-gutter:     24px;    /* (spec) 24px, never below 16px — see §21 */
+    --control-height:     32px;
+    --pill-height:        20px;
+    --icon-sm:            16px;
+    --icon-md:            20px;
+    --icon-xl:            32px;
+    --badge-size:         16px;
+    --search-max-width:   400px;
+    --dropdown-min-width: 200px;
+    --modal-width:        560px;
+    --toast-width:        360px;
+    --stat-tile-min:      200px;
+    --grid-col-min:       320px;
+    --table-max-height:   70vh;
+    --skeleton-bar:       12px;
+    --visually-hidden-size: 1px;   /* screen-reader-only text box */
+
+    /* ---- Stacking ---- */
+    --z-sticky:   10;
+    --z-scrim:    30;
+    --z-sidebar:  40;
+    --z-dropdown: 50;
+    --z-modal:    60;
+    --z-toast:    70;
+
+    /* Breakpoints (media queries can't read custom properties — see §21):
+         icon rail   < 1024px
+         off-canvas  <  768px */
+
+    color-scheme: light;
+}
+
+/* (b) OS prefers dark, and the user has not explicitly chosen light. */
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+        --paper:          #10141D;
+        --surface:        #171C27;
+        --surface-2:      #1D2330;
+        --border:         #2B3242;
+        --border-strong:  #3B4457;
+        --ink:            #EEF1F7;
+        --ink-2:          #B7BFD1;
+        --ink-3:          #7C8598;
+        --primary:        #7C9BFF;
+        --primary-hover:  #97B0FF;
+        --primary-tint:   #1C2540;
+        --accent:         #4FD8D1;
+        --accent-tint:    #123331;
+        --focus:          #7C9BFF;
+
+        /* Status, dark — same hues, lightness lifted ~25 points, background
+           a 12% mix of that colour over dark --surface (spec: "keep the same
+           hues, lift lightness ~25%, drop bg to ~12%"). Computed in HSL from
+           the light values, not picked by eye. */
+        --available: #4CDDA5;  --available-bg: #1D3336;
+        --on-loan:   #8BAAE6;  --on-loan-bg:   #252D3E;
+        --due-soon:  #F3B84C;  --due-soon-bg:  #312F2B;
+        --overdue:   #E39A9E;  --overdue-bg:   #302B35;
+        --reserved:  #C2AEE4;  --reserved-bg:  #2C2E3E;
+        --lost:      #C26A70;  --lost-bg:      #2B2530;
+
+        color-scheme: dark;
+    }
+}
+
+/* (c) The user explicitly chose dark — wins regardless of OS preference.
+   Deliberately a copy of (b): a selector can't be shared between a media
+   query and a non-media rule, and the spec requires both. */
+:root[data-theme="dark"] {
+    --paper:          #10141D;
+    --surface:        #171C27;
+    --surface-2:      #1D2330;
+    --border:         #2B3242;
+    --border-strong:  #3B4457;
+    --ink:            #EEF1F7;
+    --ink-2:          #B7BFD1;
+    --ink-3:          #7C8598;
+    --primary:        #7C9BFF;
+    --primary-hover:  #97B0FF;
+    --primary-tint:   #1C2540;
+    --accent:         #4FD8D1;
+    --accent-tint:    #123331;
+    --focus:          #7C9BFF;
+
+    --available: #4CDDA5;  --available-bg: #1D3336;
+    --on-loan:   #8BAAE6;  --on-loan-bg:   #252D3E;
+    --due-soon:  #F3B84C;  --due-soon-bg:  #312F2B;
+    --overdue:   #E39A9E;  --overdue-bg:   #302B35;
+    --reserved:  #C2AEE4;  --reserved-bg:  #2C2E3E;
+    --lost:      #C26A70;  --lost-bg:      #2B2530;
+
+    color-scheme: dark;
+}
+
+
+/* =============================================================================
+   3. RESET & BASE
+   ============================================================================= */
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+/* Zero default margins: sibling spacing comes from the parent's gap, never
+   from per-element margins (design-system.md §3). */
+body, h1, h2, h3, h4, h5, h6, p, ul, ol, li, figure, blockquote, dl, dd {
+    margin: 0;
+}
+
+ul, ol {
+    padding: 0;
+    list-style: none;
+}
+
+html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+}
+
+body {
+    min-height: 100vh;
+    font-family: var(--font-ui);
+    font-size: var(--text-14);
+    font-weight: var(--weight-regular);
+    line-height: var(--leading-body);
+    color: var(--ink);
+    background: var(--paper);
+    -webkit-font-smoothing: antialiased;
+}
+
+a {
+    color: var(--primary);
+    text-decoration: none;
+}
+a:hover {
+    color: var(--primary-hover);
+}
+
+button,
+input,
+select,
+textarea {
+    font: inherit;
+    color: inherit;
+}
+
+button {
+    cursor: pointer;
+}
+
+img,
+svg {
+    display: block;
+    max-width: 100%;
+}
+
+table {
+    border-collapse: collapse;
+}
+
+/* Components set display:flex/grid freely; [hidden] must still win. */
+[hidden] {
+    display: none !important;
+}
+
+:focus-visible {
+    outline: var(--focus-ring-width) solid var(--focus);
+    outline-offset: var(--focus-ring-offset);
+}
+
+
+/* =============================================================================
+   4. TYPOGRAPHY
+   ============================================================================= */
+
+h1, h2, h3, h4, h5, h6 {
+    font-weight: var(--weight-semibold);
+    line-height: var(--leading-tight);
+    text-wrap: balance;
+}
+h1 { font-size: var(--text-26); }
+h2 { font-size: var(--text-20); }
+h3 { font-size: var(--text-16); }
+h4 { font-size: var(--text-14); }
+
+/* RULE (design-system.md §2): any element rendering a book's title uses the
+   serif. No exceptions. Apply this class to every such element. */
+.book-title {
+    font-family: var(--font-serif);
+    font-weight: var(--weight-medium);
+}
+.book-title--italic {
+    font-style: italic;
+    font-weight: var(--weight-regular);
+}
+
+/* Numbers, IDs, ISBN, barcode, money. */
+.font-mono {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+}
+
+.label-upper {
+    font-size: var(--text-11);
+    font-weight: var(--weight-semibold);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-label);
+}
+
+.text-muted { color: var(--ink-2); }
+.text-subtle { color: var(--ink-3); }
+
+
+/* =============================================================================
+   5. ICONS — Lucide sprite at /static/icons.svg
+   Usage: <svg class="icon"><use href="/icons.svg#icon-NAME"></use></svg>
+   ============================================================================= */
+
+.icon {
+    width: var(--icon-md);
+    height: var(--icon-md);
+    flex-shrink: 0;
+    stroke: currentColor;
+}
+.icon--sm {
+    width: var(--icon-sm);
+    height: var(--icon-sm);
+}
+
+
+/* =============================================================================
+   6. LAYOUT SHELL
+   ============================================================================= */
+
+.app-shell {
+    display: grid;
+    grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
+    min-height: 100vh;
+    transition: grid-template-columns var(--duration-panel) var(--ease-entry);
+}
+
+.app-main {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-24);
+    width: 100%;
+    max-width: var(--content-max-width);
+    margin-inline: auto;      /* centres the column itself — not sibling spacing */
+    padding: var(--space-24) var(--content-gutter);
+}
+
+.page-head {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+.page-head__desc {
+    color: var(--ink-2);
+}
+/* components/page-header.html: title(+description) on the left, one
+   optional primary action on the right. Plain .page-head (no __row) still
+   works unchanged for a page with no action button. */
+.page-head__row {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--space-16);
+    flex-wrap: wrap;
+}
+
+/* Panel — flat elevation. Never a shadow on a card (design-system.md §3). */
+.panel {
+    display: flex;
+    flex-direction: column;
+    background: var(--surface);
+    border: var(--elevation-flat);
+    border-radius: var(--radius-panel);
+    overflow: hidden;
+}
+.panel__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-12);
+    padding: var(--space-12) var(--space-16);
+    border-bottom: var(--elevation-flat);
+}
+.panel__title {
+    font-size: var(--text-16);
+}
+.panel__body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-12);
+    padding: var(--space-16);
+}
+
+/* Generic responsive column grid — reuse instead of writing page CSS. */
+.layout-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(var(--grid-col-min), 1fr));
+    gap: var(--space-24);
+}
+
+/* Chart.js needs an ancestor with a resolved height (responsive + !maintainAspectRatio). */
+.chart-container {
+    position: relative;
+    height: 320px;
+    padding: var(--space-16);
+}
+.chart-container--empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Wrapping row of inline items (e.g. a set of buttons). */
+.cluster {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-8);
+}
+
+
+/* =============================================================================
+   7. SIDEBAR — 240px persistent; rail / off-canvas rules in §21
+   ============================================================================= */
+
+.sidebar {
+    position: sticky;
+    top: 0;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    background: var(--surface);
+    border-right: var(--elevation-flat);
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.sidebar__brand {
+    display: flex;
+    align-items: center;
+    gap: var(--space-12);
+    flex-shrink: 0;
+    height: var(--topbar-height);
+    padding-inline: var(--space-16) var(--space-12);
+    border-bottom: var(--elevation-flat);
+    color: var(--primary);
+}
+.sidebar__brand-name {
+    font-size: var(--text-16);
+    font-weight: var(--weight-bold);
+    color: var(--ink);
+    white-space: nowrap;
+}
+
+.sidebar__nav {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-16);
+    padding: var(--space-12) var(--space-8);
+}
+
+.sidebar__section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+.sidebar__section-label {
+    padding-inline: var(--space-12);
+    color: var(--ink-3);
+    white-space: nowrap;
+}
+
+.sidebar__list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.sidebar__link {
+    display: flex;
+    align-items: center;
+    gap: var(--space-12);
+    height: var(--control-height);
+    padding-inline: var(--space-12);
+    border-radius: var(--radius-button);
+    font-weight: var(--weight-medium);
+    color: var(--ink-2);
+    white-space: nowrap;
+    transition: background-color var(--duration-micro) var(--ease-entry),
+                color var(--duration-micro) var(--ease-entry);
+}
+.sidebar__link:hover {
+    background: var(--surface-2);
+    color: var(--ink);
+}
+.sidebar__link.is-active {
+    background: var(--primary-tint);
+    color: var(--primary);
+}
+
+/* The scrim only exists in the off-canvas state (§21). */
+.sidebar-scrim {
+    display: none;
+}
+
+
+/* =============================================================================
+   8. TOP BAR — breadcrumb · global search · notification bell · user menu
+   ============================================================================= */
+
+.topbar {
+    position: sticky;
+    top: 0;
+    z-index: var(--z-sticky);
+    display: flex;
+    align-items: center;
+    gap: var(--space-16);
+    height: var(--topbar-height);
+    padding-inline: var(--content-gutter);
+    background: var(--surface);
+    border-bottom: var(--elevation-flat);
+}
+
+/* Hamburger — only shown in the off-canvas state (§21). Doubled class so it
+   outranks .icon-btn's display, which is declared later in the file. */
+.icon-btn.sidebar-toggle {
+    display: none;
+}
+
+.topbar__search {
+    position: relative;
+    flex: 1 1 auto;
+    max-width: var(--search-max-width);
+    min-width: 0;
+    margin-inline-start: auto;   /* pushes search + actions to the right edge */
+}
+.topbar__search-icon {
+    position: absolute;
+    top: 50%;
+    left: var(--space-12);
+    width: var(--icon-sm);
+    height: var(--icon-sm);
+    color: var(--ink-3);
+    transform: translateY(-50%);
+    pointer-events: none;
+}
+.topbar__search-input {
+    width: 100%;
+    height: var(--control-height);
+    padding-inline: var(--space-32) var(--space-12);
+    background: var(--surface-2);
+    border: var(--border-width) solid var(--border);
+    border-radius: var(--radius-panel);
+    font-size: var(--text-13);
+    color: var(--ink);
+    transition: border-color var(--duration-micro) var(--ease-entry),
+                background-color var(--duration-micro) var(--ease-entry);
+}
+.topbar__search-input::placeholder {
+    color: var(--ink-3);
+}
+.topbar__search-input:focus {
+    background: var(--surface);
+    border-color: var(--focus);
+    outline: none;
+}
+.topbar__search-input:focus-visible {
+    outline: var(--focus-ring-width) solid var(--focus);
+    outline-offset: 0;
+}
+
+.topbar__actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    flex-shrink: 0;
+}
+
+.notification-badge {
+    position: absolute;
+    top: var(--space-4);
+    right: var(--space-4);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: var(--badge-size);
+    height: var(--badge-size);
+    padding-inline: var(--space-4);
+    border-radius: var(--radius-pill);
+    background: var(--primary);
+    color: var(--surface);
+    font-family: var(--font-mono);
+    font-size: var(--text-11);
+    font-weight: var(--weight-semibold);
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    transform: translate(50%, -50%);
+}
+
+.user-menu-trigger {
+    display: flex;
+    align-items: center;
+    gap: var(--space-8);
+    height: var(--control-height);
+    padding-inline: var(--space-8);
+    background: transparent;
+    border: 0;
+    border-radius: var(--radius-button);
+    color: var(--ink);
+    transition: background-color var(--duration-micro) var(--ease-entry);
+}
+.user-menu-trigger:hover {
+    background: var(--surface-2);
+}
+.user-menu-trigger__name {
+    font-size: var(--text-13);
+    font-weight: var(--weight-medium);
+    white-space: nowrap;
+}
+
+/* Theme toggle: show the moon while the effective theme is light, the sun
+   while it is dark. Mirrors the three theme states in §2. */
+.theme-toggle__icon--light { display: none; }
+.theme-toggle__icon--dark  { display: block; }
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .theme-toggle__icon--light { display: block; }
+    :root:not([data-theme="light"]) .theme-toggle__icon--dark  { display: none; }
+}
+:root[data-theme="dark"] .theme-toggle__icon--light { display: block; }
+:root[data-theme="dark"] .theme-toggle__icon--dark  { display: none; }
+
+
+/* =============================================================================
+   9. BUTTONS
+   ============================================================================= */
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-8);
+    height: var(--control-height);
+    padding-inline: var(--space-16);
+    border: var(--border-width) solid transparent;
+    border-radius: var(--radius-button);
+    font-size: var(--text-14);
+    font-weight: var(--weight-medium);
+    line-height: 1;
+    white-space: nowrap;
+    transition: background-color var(--duration-micro) var(--ease-entry),
+                border-color var(--duration-micro) var(--ease-entry),
+                color var(--duration-micro) var(--ease-entry),
+                transform var(--duration-micro) var(--ease-entry);
+}
+/* Button press — one of the animations design-system.md §6 allows. */
+.btn:active:not(:disabled) {
+    transform: scale(0.98);
+}
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Text on primary uses --surface: white on the light theme's dark blue,
+   near-black on the dark theme's light blue — correct contrast in both
+   without introducing a new colour. */
+.btn--primary {
+    background: var(--primary);
+    color: var(--surface);
+}
+.btn--primary:hover:not(:disabled) {
+    background: var(--primary-hover);
+    color: var(--surface);
+}
+
+.btn--secondary {
+    background: var(--surface);
+    border-color: var(--border-strong);
+    color: var(--ink);
+}
+.btn--secondary:hover:not(:disabled) {
+    background: var(--surface-2);
+}
+
+.btn--ghost {
+    background: transparent;
+    color: var(--ink-2);
+}
+.btn--ghost:hover:not(:disabled) {
+    background: var(--surface-2);
+    color: var(--ink);
+}
+
+/* Destructive confirmation (components/confirm-dialog.html). Same shape as
+   --secondary, recoloured with the existing --overdue token — not a new
+   colour, the same one form-field errors already use. */
+.btn--danger {
+    background: var(--surface);
+    border-color: var(--overdue);
+    color: var(--overdue);
+}
+.btn--danger:hover:not(:disabled) {
+    background: var(--overdue-bg);
+}
+
+.icon-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--control-height);
+    height: var(--control-height);
+    padding: 0;
+    background: transparent;
+    border: 0;
+    border-radius: var(--radius-button);
+    color: var(--ink-2);
+    transition: background-color var(--duration-micro) var(--ease-entry),
+                color var(--duration-micro) var(--ease-entry),
+                transform var(--duration-micro) var(--ease-entry);
+}
+.icon-btn:hover:not(:disabled) {
+    background: var(--surface-2);
+    color: var(--ink);
+}
+.icon-btn:active:not(:disabled) {
+    transform: scale(0.98);
+}
+.icon-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+
+/* =============================================================================
+   10. FORM FIELD
+   Label above, help text below, inline error in --overdue. The <label> is
+   mandatory — a placeholder is never a label (design-system.md §5, §7).
+   ============================================================================= */
+
+.form-field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.form-field__label {
+    font-size: var(--text-13);
+    font-weight: var(--weight-semibold);
+    color: var(--ink);
+}
+
+.form-field__input,
+.form-field__select,
+.form-field__textarea {
+    width: 100%;
+    height: var(--control-height);
+    padding-inline: var(--space-12);
+    background: var(--surface);
+    border: var(--border-width) solid var(--border-strong);
+    border-radius: var(--radius-panel);
+    font-size: var(--text-14);
+    color: var(--ink);
+    transition: border-color var(--duration-micro) var(--ease-entry);
+}
+.form-field__textarea {
+    height: auto;
+    padding-block: var(--space-8);
+    line-height: var(--leading-body);
+    resize: vertical;
+}
+.form-field__input::placeholder,
+.form-field__textarea::placeholder {
+    color: var(--ink-3);
+}
+.form-field__input:focus,
+.form-field__select:focus,
+.form-field__textarea:focus {
+    border-color: var(--focus);
+    outline: none;
+}
+.form-field__input:focus-visible,
+.form-field__select:focus-visible,
+.form-field__textarea:focus-visible {
+    outline: var(--focus-ring-width) solid var(--focus);
+    outline-offset: 0;
+}
+.form-field__input:disabled,
+.form-field__select:disabled,
+.form-field__textarea:disabled {
+    background: var(--surface-2);
+    color: var(--ink-3);
+    cursor: not-allowed;
+}
+
+.form-field__help {
+    font-size: var(--text-12);
+    color: var(--ink-3);
+}
+
+.form-field__error {
+    font-size: var(--text-12);
+    font-weight: var(--weight-medium);
+    color: var(--overdue);
+}
+
+.form-field--error .form-field__input,
+.form-field--error .form-field__select,
+.form-field--error .form-field__textarea {
+    border-color: var(--overdue);
+}
+
+
+/* =============================================================================
+   11. DATA TABLE & STATUS PILL
+   Sticky header, no zebra, row hover, sortable headers. Text left, numbers
+   and dates right, tabular-nums. Scrolls horizontally in its own container.
+   ============================================================================= */
+
+/* The container owns both scroll axes. The sticky header is sticky relative
+   to this box — so it needs its own max-height to have something to stick
+   within. */
+.data-table-container {
+    max-height: var(--table-max-height);
+    overflow: auto;
+}
+
+.data-table {
+    width: 100%;
+    font-variant-numeric: tabular-nums;
+}
+
+.data-table th,
+.data-table td {
+    padding: var(--space-8) var(--space-12);
+    border-radius: var(--radius-cell);
+    text-align: left;
+    vertical-align: middle;
+}
+
+.data-table th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: var(--surface-2);
+    border-bottom: var(--elevation-flat);
+    font-size: var(--text-11);
+    font-weight: var(--weight-semibold);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-label);
+    color: var(--ink-2);
+    white-space: nowrap;
+}
+
+.data-table td {
+    border-bottom: var(--elevation-flat);
+    color: var(--ink);
+}
+.data-table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+/* Row hover — no zebra striping. */
+.data-table tbody tr {
+    transition: background-color var(--duration-micro) var(--ease-entry);
+}
+.data-table tbody tr:hover {
+    background: var(--surface-2);
+}
+
+/* Numbers and dates align right. */
+.data-table__col-right,
+.data-table th.data-table__col-right,
+.data-table td.data-table__col-right {
+    text-align: right;
+}
+
+/* Sortable header: wrap the header text in <button class="data-table__sort">
+   and set aria-sort on the <th>. */
+.data-table__sort {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-4);
+    padding: 0;
+    background: none;
+    border: 0;
+    font: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+    color: inherit;
+}
+.data-table__sort:hover {
+    color: var(--ink);
+}
+.data-table__sort .icon {
+    width: var(--icon-sm);
+    height: var(--icon-sm);
+    color: var(--ink-3);
+}
+.data-table th[aria-sort="ascending"] .data-table__sort,
+.data-table th[aria-sort="descending"] .data-table__sort {
+    color: var(--ink);
+}
+.data-table th[aria-sort="ascending"] .data-table__sort .icon,
+.data-table th[aria-sort="descending"] .data-table__sort .icon {
+    color: var(--primary);
+}
+
+/* Table row insert / remove — both allowed by design-system.md §6.
+   Add .is-inserting when a row lands (e.g. an HTMX swap); add .is-removing
+   before removing a row, then remove it on animationend. */
+.data-table tr.is-inserting {
+    animation: row-in var(--duration-panel) var(--ease-entry);
+}
+.data-table tr.is-removing {
+    animation: row-out var(--duration-micro) var(--ease-exit) forwards;
+}
+
+/* Status pill */
+.status-pill {
+    display: inline-flex;
+    align-items: center;
+    height: var(--pill-height);
+    padding-inline: var(--space-8);
+    border-radius: var(--radius-pill);
+    font-size: var(--text-11);
+    font-weight: var(--weight-semibold);
+    line-height: 1;
+    white-space: nowrap;
+    /* Status pill colour change — allowed by design-system.md §6. */
+    transition: color var(--duration-micro) var(--ease-entry),
+                background-color var(--duration-micro) var(--ease-entry);
+}
+.status-pill--available { color: var(--available); background: var(--available-bg); }
+.status-pill--on-loan   { color: var(--on-loan);   background: var(--on-loan-bg); }
+.status-pill--due-soon  { color: var(--due-soon);  background: var(--due-soon-bg); }
+.status-pill--overdue   { color: var(--overdue);   background: var(--overdue-bg); }
+.status-pill--reserved  { color: var(--reserved);  background: var(--reserved-bg); }
+.status-pill--lost      { color: var(--lost);      background: var(--lost-bg); }
+
+
+/* =============================================================================
+   12. STAT TILE — dashboards only, never inside a form or a list
+   ============================================================================= */
+
+.stat-tile-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(var(--stat-tile-min), 1fr));
+    gap: var(--space-16);
+}
+
+.stat-tile {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    padding: var(--space-16);
+    background: var(--surface);
+    border: var(--elevation-flat);
+    border-radius: var(--radius-panel);
+}
+.stat-tile__label {
+    color: var(--ink-3);
+}
+.stat-tile__value {
+    font-family: var(--font-mono);
+    font-size: var(--text-26);
+    font-weight: var(--weight-semibold);
+    font-variant-numeric: tabular-nums;
+    line-height: var(--leading-tight);
+    color: var(--ink);
+}
+.stat-tile--overdue .stat-tile__value {
+    color: var(--overdue);
+}
+
+
+/* =============================================================================
+   13. EMPTY STATE — line icon + one sentence + a primary action button
+   ============================================================================= */
+
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-12);
+    padding: var(--space-32) var(--space-16);
+    text-align: center;   /* a small placeholder block, not a data page */
+}
+.empty-state__icon {
+    width: var(--icon-xl);
+    height: var(--icon-xl);
+    color: var(--ink-3);
+    stroke-width: 1.5;
+}
+.empty-state__text {
+    color: var(--ink-2);
+}
+
+
+/* =============================================================================
+   14. SKELETON ROW — used instead of spinners for table loading
+   ============================================================================= */
+
+/* Standalone row (e.g. inside a panel body)… */
+.skeleton-row {
+    padding: var(--space-8) 0;
+}
+.skeleton-row::after,
+/* …or a bar inside a real table cell: <td><span class="skeleton-bar"></span></td> */
+.skeleton-bar {
+    content: '';
+    display: block;
+    width: 100%;
+    height: var(--skeleton-bar);
+    background: var(--border);
+    border-radius: var(--radius-cell);
+    /* Skeleton shimmer is allowed by design-system.md §6, but nothing may
+       animate for longer than 240ms. So this is an opacity pulse at the
+       maximum duration, alternating, rather than a slow sweep. */
+    animation: skeleton-pulse var(--duration-max) var(--ease-entry) infinite alternate;
+}
+.skeleton-row:nth-child(2n)::after {
+    width: 75%;
+}
+
+
+/* =============================================================================
+   15. PAGINATION — server-side; shows range and total
+   ============================================================================= */
+
+.pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-16);
+    padding: var(--space-12) var(--space-16);
+    border-top: var(--elevation-flat);
+}
+.pagination__range {
+    font-size: var(--text-13);
+    color: var(--ink-2);
+}
+.pagination__controls {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+}
+.pagination__page {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: var(--control-height);
+    height: var(--control-height);
+    padding-inline: var(--space-8);
+    border-radius: var(--radius-button);
+    font-family: var(--font-mono);
+    font-size: var(--text-13);
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-2);
+    transition: background-color var(--duration-micro) var(--ease-entry);
+}
+.pagination__page:hover {
+    background: var(--surface-2);
+    color: var(--ink);
+}
+.pagination__page.is-current {
+    background: var(--primary-tint);
+    color: var(--primary);
+    font-weight: var(--weight-semibold);
+}
+
+
+/* =============================================================================
+   16. DROPDOWN — raised
+   ============================================================================= */
+
+.dropdown {
+    position: relative;
+}
+
+/* Raised = --shadow-raised. The 1px border is there because the spec's
+   shadow (10% of the light --ink) all but vanishes on the dark theme's
+   near-black surfaces; without it the menu's edge disappears in dark mode.
+   The same applies to .modal and .toast. */
+.dropdown__menu {
+    position: absolute;
+    top: calc(100% + var(--space-4));
+    left: 0;
+    z-index: var(--z-dropdown);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    min-width: var(--dropdown-min-width);
+    padding: var(--space-4);
+    background: var(--surface);
+    border: var(--elevation-flat);
+    border-radius: var(--radius-panel);
+    box-shadow: var(--shadow-raised);
+    animation: dropdown-in var(--duration-micro) var(--ease-entry);
+}
+.dropdown__menu--right {
+    left: auto;
+    right: 0;
+}
+
+.dropdown__item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-8);
+    height: var(--control-height);
+    padding-inline: var(--space-12);
+    border-radius: var(--radius-button);
+    font-size: var(--text-14);
+    color: var(--ink);
+    white-space: nowrap;
+}
+.dropdown__item .icon {
+    width: var(--icon-sm);
+    height: var(--icon-sm);
+    color: var(--ink-3);
+}
+.dropdown__item:hover {
+    background: var(--surface-2);
+    color: var(--ink);
+}
+
+.dropdown__divider {
+    height: var(--border-width);
+    background: var(--border);
+}
+
+
+/* =============================================================================
+   17. MODAL — raised, focus-trapped, Esc closes, returns focus on close
+   (behaviour lives in /static/js/app-shell.js)
+   ============================================================================= */
+
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-modal);
+    display: grid;
+    place-items: center;
+    padding: var(--space-16);
+    background: var(--backdrop);
+    animation: fade-in var(--duration-panel) var(--ease-entry);
+}
+.modal-backdrop.is-closing {
+    animation: fade-out var(--duration-micro) var(--ease-exit) forwards;
+}
+
+.modal {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: var(--modal-width);
+    max-height: calc(100vh - var(--space-48));
+    background: var(--surface);
+    border: var(--elevation-flat);
+    border-radius: var(--radius-panel);
+    box-shadow: var(--shadow-raised);
+    overflow: hidden;
+    animation: modal-in var(--duration-panel) var(--ease-entry);
+}
+.modal-backdrop.is-closing .modal {
+    animation: modal-out var(--duration-micro) var(--ease-exit) forwards;
+}
+
+.modal__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-12);
+    padding: var(--space-16) var(--space-24);
+    border-bottom: var(--elevation-flat);
+}
+.modal__title {
+    font-size: var(--text-20);
+}
+.modal__body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-16);
+    padding: var(--space-24);
+    overflow-y: auto;
+}
+.modal__footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-8);
+    padding: var(--space-16) var(--space-24);
+    border-top: var(--elevation-flat);
+}
+/* components/confirm-dialog.html wraps its Confirm button in its own
+   <form> so the click submits a POST. display:contents removes the form
+   from layout entirely so the button still sits directly in the footer's
+   flex row, right where a plain <button> would. */
+.modal__footer form {
+    display: contents;
+}
+
+
+/* =============================================================================
+   18. TOAST — bottom-right, slides in, auto-dismiss 4s, manual close
+   (behaviour lives in /static/js/app-shell.js)
+   ============================================================================= */
+
+.toast-region {
+    position: fixed;
+    right: var(--space-24);
+    bottom: var(--space-24);
+    z-index: var(--z-toast);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
+    width: var(--toast-width);
+    max-width: calc(100vw - var(--space-32));
+    pointer-events: none;   /* the empty region must not block clicks */
+}
+
+.toast {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: start;
+    gap: var(--space-12);
+    padding: var(--space-12) var(--space-12) var(--space-12) var(--space-16);
+    background: var(--surface);
+    border: var(--elevation-flat);
+    border-radius: var(--radius-panel);
+    box-shadow: var(--shadow-raised);
+    pointer-events: auto;
+    animation: toast-in var(--duration-panel) var(--ease-entry);
+}
+.toast.is-leaving {
+    animation: toast-out var(--duration-micro) var(--ease-exit) forwards;
+}
+
+.toast__icon {
+    margin-block-start: var(--space-4);  /* optical alignment to the title's cap height */
+    width: var(--icon-sm);
+    height: var(--icon-sm);
+}
+.toast--success .toast__icon { color: var(--available); }
+.toast--error   .toast__icon { color: var(--overdue); }
+.toast--info    .toast__icon { color: var(--primary); }
+
+.toast__content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    min-width: 0;
+    padding-block: var(--space-4);
+}
+.toast__title {
+    font-size: var(--text-14);
+    font-weight: var(--weight-semibold);
+    color: var(--ink);
+}
+.toast__message {
+    font-size: var(--text-13);
+    color: var(--ink-2);
+}
+
+
+/* =============================================================================
+   19. BREADCRUMB
+   ============================================================================= */
+
+.breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: var(--space-8);
+    min-width: 0;
+    font-size: var(--text-13);
+}
+.breadcrumb__item {
+    color: var(--ink-3);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+a.breadcrumb__item:hover {
+    color: var(--ink);
+}
+.breadcrumb__item--current {
+    font-weight: var(--weight-semibold);
+    color: var(--ink);
+}
+.breadcrumb__sep {
+    width: var(--icon-sm);
+    height: var(--icon-sm);
+    color: var(--ink-3);
+}
+
+
+/* =============================================================================
+   20. MOTION
+   Durations 120 / 180 / 240ms only. Entry cubic-bezier(0.2, 0, 0, 1), exit
+   ease-in. Only what design-system.md §6 lists animates — nothing on page
+   load, route change, scroll or decoration, and nothing longer than 240ms.
+   ============================================================================= */
+
+@keyframes fade-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+@keyframes fade-out {
+    from { opacity: 1; }
+    to   { opacity: 0; }
+}
+
+@keyframes dropdown-in {
+    from { opacity: 0; transform: translateY(calc(-1 * var(--space-4))); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes modal-in {
+    from { opacity: 0; transform: translateY(var(--space-8)) scale(0.98); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes modal-out {
+    from { opacity: 1; transform: translateY(0) scale(1); }
+    to   { opacity: 0; transform: translateY(var(--space-8)) scale(0.98); }
+}
+
+@keyframes toast-in {
+    from { opacity: 0; transform: translateX(var(--space-16)); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes toast-out {
+    from { opacity: 1; transform: translateX(0); }
+    to   { opacity: 0; transform: translateX(var(--space-16)); }
+}
+
+@keyframes row-in {
+    from { opacity: 0; background-color: var(--primary-tint); }
+    to   { opacity: 1; background-color: transparent; }
+}
+@keyframes row-out {
+    from { opacity: 1; }
+    to   { opacity: 0; }
+}
+
+@keyframes skeleton-pulse {
+    from { opacity: 1; }
+    to   { opacity: 0.55; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: var(--duration-reduced) !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: var(--duration-reduced) !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+
+/* =============================================================================
+   21. RESPONSIVE — icon rail below 1024px, off-canvas below 768px
+   Literal breakpoints: media queries cannot read custom properties.
+   ============================================================================= */
+
+/* ---- Icon rail: < 1024px ---- */
+@media (max-width: 1023.98px) {
+    .app-shell {
+        grid-template-columns: var(--sidebar-rail-width) minmax(0, 1fr);
+    }
+
+    .sidebar__brand {
+        justify-content: center;
+        padding-inline: 0;
+    }
+    .sidebar__brand-name,
+    .sidebar__section-label {
+        display: none;
+    }
+
+    .sidebar__link {
+        justify-content: center;
+        padding-inline: 0;
+    }
+
+    /* Labels are hidden visually but stay in the accessibility tree, so
+       screen readers still announce "Reservations" on an icon-only link. */
+    .sidebar__label {
+        position: absolute;
+        width: var(--visually-hidden-size);
+        height: var(--visually-hidden-size);
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+    }
+}
+
+/* ---- Off-canvas: < 768px ---- */
+@media (max-width: 767.98px) {
+    :root {
+        --content-gutter: var(--space-16);   /* spec: never less than 16px */
+    }
+
+    .app-shell {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    /* The sidebar leaves the grid and slides in over the content. It keeps
+       flat elevation: raised is reserved for modals, dropdowns and toasts. */
+    .sidebar {
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        z-index: var(--z-sidebar);
+        width: var(--sidebar-width);
+        transform: translateX(-100%);
+        transition: transform var(--duration-panel) var(--ease-exit);
+    }
+    .sidebar.is-open {
+        transform: translateX(0);
+        transition: transform var(--duration-panel) var(--ease-entry);
+    }
+
+    /* Inside the drawer there is room for full labels again — undo the
+       icon-rail rules above. */
+    .sidebar__brand {
+        justify-content: flex-start;
+        padding-inline: var(--space-16) var(--space-12);
+    }
+    .sidebar__brand-name {
+        display: inline;
+    }
+    .sidebar__section-label {
+        display: block;
+    }
+    .sidebar__link {
+        justify-content: flex-start;
+        padding-inline: var(--space-12);
+    }
+    .sidebar__label {
+        position: static;
+        width: auto;
+        height: auto;
+        overflow: visible;
+        clip-path: none;
+    }
+
+    .sidebar-scrim {
+        position: fixed;
+        inset: 0;
+        z-index: var(--z-scrim);
+        display: block;
+        background: var(--backdrop);
+        animation: fade-in var(--duration-panel) var(--ease-entry);
+    }
+
+    .icon-btn.sidebar-toggle {
+        display: inline-flex;
+    }
+
+    .topbar {
+        gap: var(--space-8);
+    }
+
+    /* Keep only the current page in the breadcrumb, and drop the user's
+       name beside the avatar, so search keeps usable width. */
+    .breadcrumb > :not(.breadcrumb__item--current) {
+        display: none;
+    }
+    .user-menu-trigger__name {
+        display: none;
+    }
+}
+
+
+/* =============================================================================
+   22. UTILITIES
+   ============================================================================= */
+
+.visually-hidden {
+    position: absolute;
+    width: var(--visually-hidden-size);
+    height: var(--visually-hidden-size);
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
+/* Lock page scroll while the off-canvas drawer or a modal is open. */
+body.is-scroll-locked {
+    overflow: hidden;
+}

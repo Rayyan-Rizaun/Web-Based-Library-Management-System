@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<!--
+    Skeleton loading state — used instead of a spinner (design-system.md §7
+    bans "spinners as the only loading state"). Two shapes:
+
+    skeletonRows(count) — standalone bars in a panel that isn't a table yet
+    (e.g. a dashboard card whose content loads after the page does). Put it
+    where the real content will go.
+
+        <div th:replace="~{components/skeleton-row :: skeletonRows(3)}"></div>
+
+    skeletonTableRows(columns, rowCount) — a <tbody> replacement for a real
+    data-table while its rows are still loading (e.g. an HTMX request in
+    flight). Reuse the SAME `columns` list the table itself is built with,
+    so the skeleton lines up with the real header:
+
+        <table class="data-table">
+          <thead>...</thead>
+          <tbody th:replace="~{components/skeleton-row :: skeletonTableRows(${columns}, 5)}"></tbody>
+        </table>
+-->
+<div th:fragment="skeletonRows(count)">
+    <div class="skeleton-row" th:each="i : ${#numbers.sequence(1, count ?: 3)}"></div>
+</div>
+
+<tbody th:fragment="skeletonTableRows(columns, rowCount)">
+    <tr th:each="i : ${#numbers.sequence(1, rowCount ?: 3)}">
+        <td th:each="col : ${columns}" th:classappend="${col.align() == 'right'} ? 'data-table__col-right' : ''">
+            <span class="skeleton-bar"></span>
+        </td>
+    </tr>
+</tbody>
+</body>
+</html>

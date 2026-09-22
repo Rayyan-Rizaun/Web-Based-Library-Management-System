@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<!--
+    Toast: bottom-right, slides in, auto-dismisses after 4s, manual close —
+    all already built in /static/js/app-shell.js §5 as LMS.toast.show(...),
+    which builds the <div class="toast toast--variant"> markup itself.
+
+    This fragment does NOT duplicate that markup. Two toasts built two
+    different ways (one from a Thymeleaf fragment, one from JS) would drift
+    apart the first time someone changes one and not the other. Instead it
+    TRIGGERS the same JS function server-rendered pages need most: showing
+    a toast for the result of the action that just redirected here — "Loan
+    renewed", "Renewal blocked" — using Spring's flash attributes.
+
+    th:fragment="flash(successTitle, successMessage, errorTitle, errorMessage)"
+
+    Put it once, right after <body> opens in your page content, and set the
+    matching flash attributes from the controller that redirects here:
+
+        redirectAttributes.addFlashAttribute("flashSuccessTitle", "Loan renewed");
+        redirectAttributes.addFlashAttribute("flashSuccessMessage", "New due date: 29 Sep.");
+        return "redirect:/loans/42";
+
+        <div th:replace="~{components/toast :: flash(${flashSuccessTitle}, ${flashSuccessMessage},
+                                                       ${flashErrorTitle}, ${flashErrorMessage})}"></div>
+
+    For a toast in direct response to a click with nothing to redirect for
+    (e.g. "copied to clipboard"), skip this fragment and call
+    LMS.toast.show({title, message, variant}) directly, or use a trigger
+    button with data-toast-title/-message/-variant (see app-shell.js §5 and
+    home.html's "Component demo" panel for both).
+
+    Wrapped in DOMContentLoaded because this fragment can render before
+    app-shell.js has run (it sits in the page content, near the top of
+    <body>, while app-shell.js loads at the bottom) — window.LMS would not
+    exist yet if called immediately. DOMContentLoaded always fires after
+    the whole document — app-shell.js included — has parsed, so by the time
+    it fires LMS.toast.show is there.
+-->
+<th:block th:fragment="flash(successTitle, successMessage, errorTitle, errorMessage)">
+    <script th:if="${successTitle != null}" th:inline="javascript">
+        /*<![CDATA[*/
+        window.addEventListener('DOMContentLoaded', function () {
+            window.LMS.toast.show({
+                title: /*[[${successTitle}]]*/ '',
+                message: /*[[${successMessage}]]*/ '',
+                variant: 'success'
+            });
+        });
+        /*]]>*/
+    </script>
+    <script th:if="${errorTitle != null}" th:inline="javascript">
+        /*<![CDATA[*/
+        window.addEventListener('DOMContentLoaded', function () {
+            window.LMS.toast.show({
+                title: /*[[${errorTitle}]]*/ '',
+                message: /*[[${errorMessage}]]*/ '',
+                variant: 'error'
+            });
+        });
+        /*]]>*/
+    </script>
+</th:block>
+</body>
+</html>

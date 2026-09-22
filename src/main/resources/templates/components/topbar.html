@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<!--
+    Top bar: breadcrumb, global search, notification bell, user menu.
+    th:fragment="topbar" — included by layout/base.html.
+
+    ${pageTitle} is read with an Elvis fallback so this renders correctly
+    from a controller that doesn't set it. ${currentUserName} and
+    ${authenticated} come from com.lms.common.web.CurrentUserAdvice, added
+    to every view's model automatically — a feature controller never needs
+    to set either itself. ${unreadNotifications} has no real source yet
+    (no feature populates Notification-backed counts); it stays Elvis-
+    defaulted to 0 until one does.
+-->
+<header class="topbar" th:fragment="topbar">
+    <button type="button" class="icon-btn sidebar-toggle" id="sidebar-open"
+            aria-label="Open navigation" aria-expanded="false" aria-controls="sidebar">
+        <svg class="icon" aria-hidden="true"><use href="/icons.svg#icon-menu"></use></svg>
+    </button>
+
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a th:href="@{/}" class="breadcrumb__item">Library Management System</a>
+        <svg class="icon breadcrumb__sep" aria-hidden="true"><use href="/icons.svg#icon-chevron-right"></use></svg>
+        <span class="breadcrumb__item breadcrumb__item--current" th:text="${pageTitle} ?: 'Dashboard'">Dashboard</span>
+    </nav>
+
+    <!-- No action yet: global search is not built. Submitting reloads the
+         current page with ?q=, rather than posting to a URL that 404s. -->
+    <form class="topbar__search" role="search" method="get">
+        <svg class="icon topbar__search-icon" aria-hidden="true"><use href="/icons.svg#icon-search"></use></svg>
+        <label for="global-search" class="visually-hidden">Search the catalogue</label>
+        <input type="search" id="global-search" name="q" class="topbar__search-input"
+               placeholder="Search books, members, loans…" autocomplete="off" />
+    </form>
+
+    <div class="topbar__actions">
+        <button type="button" class="icon-btn" aria-label="Toggle theme" id="theme-toggle">
+            <svg class="icon theme-toggle__icon theme-toggle__icon--light" aria-hidden="true"><use href="/icons.svg#icon-sun"></use></svg>
+            <svg class="icon theme-toggle__icon theme-toggle__icon--dark" aria-hidden="true"><use href="/icons.svg#icon-moon"></use></svg>
+        </button>
+
+        <button type="button" class="icon-btn" aria-label="Notifications">
+            <svg class="icon" aria-hidden="true"><use href="/icons.svg#icon-bell"></use></svg>
+            <span class="notification-badge" th:if="${(unreadNotifications ?: 0) > 0}"
+                  th:text="${unreadNotifications ?: 0}">3</span>
+        </button>
+
+        <div class="dropdown" data-dropdown>
+            <button type="button" class="user-menu-trigger" data-dropdown-trigger
+                    aria-haspopup="true" aria-expanded="false">
+                <svg class="icon" aria-hidden="true"><use href="/icons.svg#icon-circle-user"></use></svg>
+                <span class="user-menu-trigger__name" th:text="${currentUserName} ?: 'Guest'">Guest</span>
+                <svg class="icon" aria-hidden="true"><use href="/icons.svg#icon-chevron-down"></use></svg>
+            </button>
+            <!-- th:if in practice always holds here — every page using this
+                 shell requires login (SecurityConfig: anyRequest().authenticated())
+                 — kept explicit rather than assumed, so this stays correct
+                 if a public page ever does use the shell. -->
+            <div th:if="${authenticated}" class="dropdown__menu dropdown__menu--right" data-dropdown-menu role="menu" hidden>
+                <a th:href="@{/account}" class="dropdown__item" role="menuitem">
+                    <svg class="icon" aria-hidden="true"><use href="/icons.svg#icon-circle-user"></use></svg>
+                    Profile
+                </a>
+                <a href="#" class="dropdown__item" role="menuitem">
+                    <svg class="icon" aria-hidden="true"><use href="/icons.svg#icon-settings"></use></svg>
+                    Settings
+                </a>
+                <div class="dropdown__divider"></div>
+                <!-- Logout is a POST (Spring Security's default) so it carries
+                     the CSRF token like any other state-changing form —
+                     never a plain <a href="/logout">. display:contents (the
+                     same trick app.css already documents for
+                     .modal__footer form) takes the <form> itself out of
+                     layout so the button underneath sits directly in the
+                     menu's flex column, exactly like the plain <a> items
+                     above it — no new CSS rule needed for one form. -->
+                <form th:action="@{/logout}" method="post" style="display:contents">
+                    <!-- background/border/text-align/font reset the browser's
+                         default <button> chrome — .dropdown__item was written
+                         for <a>, which has none of that chrome to begin with.
+                         No design-system value is introduced; these three
+                         just get out of the way so .dropdown__item's own
+                         colours and spacing show through unobstructed, the
+                         same as they do on the <a> items above. -->
+                    <button type="submit" class="dropdown__item" role="menuitem"
+                            style="background:none; border:0; font:inherit; text-align:left; cursor:pointer">
+                        <svg class="icon" aria-hidden="true"><use href="/icons.svg#icon-log-out"></use></svg>
+                        Sign out
+                    </button>
+                </form>
+            </div>
+            <div th:unless="${authenticated}" class="dropdown__menu dropdown__menu--right" data-dropdown-menu role="menu" hidden>
+                <a th:href="@{/login}" class="dropdown__item" role="menuitem">
+                    <svg class="icon" aria-hidden="true"><use href="/icons.svg#icon-log-in"></use></svg>
+                    Log in
+                </a>
+                <a th:href="@{/register}" class="dropdown__item" role="menuitem">
+                    <svg class="icon" aria-hidden="true"><use href="/icons.svg#icon-user-plus"></use></svg>
+                    Create account
+                </a>
+            </div>
+        </div>
+    </div>
+</header>
+</body>
+</html>

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<!--
+    Page header: <h1> + one-line description, with an optional primary
+    action on the right (e.g. "+ Add Book"). This is the same .page-head
+    block home.html's dashboard already used, pulled out into a fragment so
+    every other screen gets the same heading treatment for free.
+
+    th:fragment="pageHeader(title, description, actionText, actionHref, actionIcon)"
+
+    title        the <h1> text. Required.
+    description  optional one-line subtitle.
+    actionText,
+    actionHref   both optional — omit either one and no button renders.
+    actionIcon   optional icon id without the "icon-" prefix, e.g. 'plus'.
+-->
+<div th:fragment="pageHeader(title, description, actionText, actionHref, actionIcon)" class="page-head">
+    <div class="page-head__row">
+        <div>
+            <h1 th:text="${title}">Page title</h1>
+            <p th:if="${description != null}" class="page-head__desc" th:text="${description}">Description.</p>
+        </div>
+        <a th:if="${actionText != null and actionHref != null}" th:href="${actionHref}" class="btn btn--primary">
+            <svg th:if="${actionIcon != null}" class="icon" aria-hidden="true"><use th:href="${'/icons.svg#icon-' + actionIcon}"></use></svg>
+            <span th:text="${actionText}">Action</span>
+        </a>
+    </div>
+</div>
+</body>
+</html>

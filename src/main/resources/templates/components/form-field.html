@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<!--
+    Form field: label above, help text below, inline error in --overdue.
+    Never a placeholder standing in for the label — the label is always
+    rendered (design-system.md §5, §7).
+
+    th:fragment="formField(field, label, type, help, required, options, textareaRows, placeholder)"
+
+    field       the bound property's name, e.g. 'email' or 'address.city' —
+                a plain String, NOT *{...} syntax. MUST be called from
+                inside a <form th:object="${yourCommand}">; see below.
+    label       shown above the input. Always required — this is the part
+                of the component that makes a hand-written placeholder-as-
+                label impossible to reach for.
+    type        'text' (default) | 'email' | 'password' | 'number' | 'date'
+                | 'search' | 'tel' | 'select' | 'textarea'.
+    help        optional help text below the input.
+    required    optional boolean — adds the `required` attribute and a
+                trailing "*" on the label.
+    options     only for type='select': List<com.lms.common.web.SelectOption>.
+    textareaRows  only for type='textarea': row count, default 3.
+    placeholder   optional supplementary hint INSIDE the input (e.g. "e.g.
+                2027-01-15") — never a substitute for `label`, which always
+                renders regardless.
+
+    WHY `field` IS A STRING, NOT *{...}
+    A generic fragment can't know your command object's property names
+    ahead of time, so it can't be written with a literal *{propertyName}.
+    Instead it takes the name as a String and uses Thymeleaf preprocessing
+    (*{__${field}__}) to splice it into a real selection expression at
+    render time — the one non-obvious trick in this file. See the worked
+    example (a full form) in templates/components/README.md.
+
+    Field/label pairing and validation both use Thymeleaf's own machinery
+    (#ids, #fields) so this works correctly even if the same field name is
+    used twice on one page (e.g. an inline-edit row repeated in a th:each).
+-->
+<div th:fragment="formField(field, label, type, help, required, options, textareaRows, placeholder)"
+     class="form-field"
+     th:classappend="${#fields.hasErrors('__${field}__')} ? 'form-field--error' : ''">
+
+    <label th:for="${#ids.next(field)}" class="form-field__label"
+           th:text="${required} ? ${label} + ' *' : ${label}">Label</label>
+
+    <input th:if="${type == null or (type != 'select' and type != 'textarea')}"
+           th:id="${#ids.seq(field)}"
+           th:type="${type} ?: 'text'"
+           th:field="*{__${field}__}"
+           th:placeholder="${placeholder}"
+           th:required="${required} ?: false"
+           class="form-field__input" />
+
+    <select th:if="${type == 'select'}"
+            th:id="${#ids.seq(field)}"
+            th:field="*{__${field}__}"
+            th:required="${required} ?: false"
+            class="form-field__select">
+        <option th:each="opt : ${options}" th:value="${opt.value()}" th:text="${opt.label()}">Option</option>
+    </select>
+
+    <textarea th:if="${type == 'textarea'}"
+              th:id="${#ids.seq(field)}"
+              th:field="*{__${field}__}"
+              th:rows="${textareaRows} ?: 3"
+              th:placeholder="${placeholder}"
+              th:required="${required} ?: false"
+              class="form-field__textarea"></textarea>
+
+    <p th:if="${help != null}" class="form-field__help" th:text="${help}">Help text.</p>
+    <p th:if="${#fields.hasErrors('__${field}__')}" class="form-field__error" th:errors="*{__${field}__}">Error message.</p>
+</div>
+</body>
+</html>

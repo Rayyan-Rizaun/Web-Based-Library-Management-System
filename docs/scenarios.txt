@@ -1,0 +1,495 @@
+                        SE2030 - Software Engineering
+
+          Sri Lanka Institute of Information Technology
+
+Web-Based Library Management System
+
+                          Sequence Diagram
+                 Year 2 - Semester 1 | June 2026
+
+                   Software Engineering | SE2030
+                             MLB-B11G2-10
+
+Group Members                  Rayyan M.R.M
+                               Vithanage C.B
+            IT25101420        Lakshitha P.M.M
+            IT25102212       Wijewickrama S.N
+            IT25103166  WijegunawardanaP.K.D.S.U
+            IT25100467      Amukotuwa A.G.S.I
+            IT25102574
+            IT25100041
+                                                                                                                                      SE2030 - Software Engineering
+
+Note on member workload distribution: The Requirement Gathering report defines ten major functions
+(Section 7.1-7.10) for a group of six members, so a strict one-function-per-member split is not possible. UC-01
+to UC-04 and UC-06 each remain a single, substantial main function assigned to one member. Fine
+Management (7.2) and Reports and Analytics (7.6), taken alone, are narrower in scope than the other
+members' functions, so each of those two members has additionally been assigned the closely related extended
+functions from Section 7 to balance workload and ensure all ten major functions are covered: Vithanage C.B.
+covers Fine Management (UC-05), Fine Appeal and Waiver (UC-09), and Fine Payment and Receipt (UC-10) --
+the full fine-handling lifecycle; Amukotuwa A.G.S.I. covers Reports and Analytics (UC-06), Book Ratings and
+Reviews (UC-07), and Member Feedback (UC-08) -- the system-insight and user-generated-content functions.
+
+UC-01: Manage User Accounts and Roles
+
+Member: Rayyan M.R.M. -- IT25101420
+
+Primary Actor:
+Library Administrator
+
+Supporting Actor:
+Library Member, Librarian (for self-service registration and profile updates, per Requirements
+Section 7.1)
+
+Goal:
+Create, update, deactivate user accounts, and assign correct roles; and allow members and
+librarians to self-register and manage their own profile information.
+
+Preconditions:
+  · The Library Administrator is logged in.
+  · The Library Administrator has permission to manage user accounts.
+  · For self-service actions, the Library Member or Librarian has a valid account or is registering a
+      new one.
+
+Main Flow - Administrator Manages Accounts:
+  · The Library Administrator selects "User Management".
+  · The system displays the user-account list.
+  · The Library Administrator selects an existing user or chooses to create a new user.
+  · The Library Administrator enters or updates user information.
+  · The Library Administrator assigns a role such as Library Member, Librarian, Finance Officer, or
+      Library Administrator.
+  · The Library Administrator saves the changes.
+  · The system validates the entered details.
+  · The system creates or updates the user account.
+  · The system displays a success message.
+
+Main Flow - Self-Service Registration and Profile Update:
+                                                                                                                                      SE2030 - Software Engineering
+
+  · The Library Member or Librarian selects "Register" or "My Profile".
+  · The user enters or updates their personal information.
+  · The user saves the changes.
+  · The system validates the entered details.
+  · The system creates or updates the account within the permissions allowed for that role.
+  · The system displays a confirmation message.
+Alternative Flows:
+  · If required information is missing, the system requests the user to complete it.
+  · If the username or email already exists, the system displays an error.
+  · If the Library Administrator deactivates an account, the system prevents that user from
+
+      logging in.
+  · A Library Member or Librarian cannot change their own assigned role; only the Library
+
+      Administrator can assign or change roles.
+Postconditions:
+
+  · The user account is created, updated, or deactivated.
+  · The assigned role determines the user's system access.
+Sequence Diagram -- UC-01: Manage User Accounts and Roles
+
+                 [ Insert sequence diagram here ] UC-01: Manage User Accounts and Roles
+
+UC-02: Manage Book Catalog and Inventory
+
+Member: Lakshitha P.M.M. -- IT25103166
+Primary Actor:
+Librarian
+Supporting Actor:
+Library Administrator (per Requirements Section 7.4)
+Goal:
+Add, update, search, and remove book records while maintaining availability information.
+Preconditions:
+
+  · The Librarian is logged in.
+  · The Librarian has permission to manage book records.
+Main Flow:
+                                                                                                                                      SE2030 - Software Engineering
+
+  · The Librarian selects "Book Catalog and Inventory Management".
+  · The system displays the current book catalog.
+  · The Librarian selects "Add New Book".
+  · The Librarian enters the title, author, category, ISBN, number of copies, and other relevant
+
+      details.
+  · The Librarian saves the book record.
+  · The system validates the data.
+  · The system adds the book to the catalog and sets the availability status.
+  · The system displays a confirmation message.
+
+Alternative Flows:
+  · The Librarian may search for a book by title, author, or category before adding a new record.
+  · If a duplicate ISBN is entered, the system displays an error.
+  · The Librarian may update book details or delete a record that has no active borrowing
+      transactions.
+  · The Library Administrator may also access Book Catalog and Inventory Management to
+      oversee or correct catalog records.
+
+Postconditions:
+  · The book catalog and inventory are updated.
+  · Members and guest visitors can search and view the latest book availability.
+
+Sequence Diagram -- UC-02: Manage Book Catalog and Inventory
+SE2030 - Software Engineering
+                                                                                                                                      SE2030 - Software Engineering
+
+UC-03: Borrow and Return Books
+
+Member: Wijegunawardana P.K.D.S.U. -- IT25102574
+
+Primary Actor:
+Librarian
+
+Supporting Actor:
+Library Member, Academic Staff Member (for renewal)
+
+Goal:
+Issue available books to members and record returned books.
+
+Preconditions:
+  · The Librarian is logged in.
+  · The Library Member has an active account.
+  · The selected book is available for borrowing.
+  · The Library Member has not exceeded the borrowing limit and has no unpaid borrowing
+      restriction.
+
+Main Flow - Borrow Book:
+  · The Librarian selects "Issue Book".
+  · The Librarian searches for and selects the Library Member.
+  · The system displays the Library Member's borrowing eligibility.
+  · The Librarian searches for and selects an available book.
+  · The system checks book availability.
+  · The system calculates the due date according to library rules.
+  · The Librarian confirms the transaction.
+  · The system records the borrowing transaction.
+  · The system changes the book status to unavailable or reduces the available-copy count.
+  · The system displays the due date and confirmation.
+
+Main Flow - Return Book:
+  · The Librarian selects "Return Book".
+  · The Librarian enters or searches for the borrowing record.
+  · The system displays the borrowed book and due date.
+  · The Librarian confirms the return.
+  · The system calculates an overdue fine, if applicable.
+  · The system updates book availability.
+  · The system records the return transaction.
+  · The system displays a confirmation and fine amount, if applicable.
+
+Main Flow - Renew Book:
+                                                                                                                                      SE2030 - Software Engineering
+
+  · The Library Member selects "Renew Book".
+  · The system displays the current borrowed book and due date.
+  · The system checks whether another member is waiting (reservation) for the same book.
+  · If no one is waiting, the system extends the due date according to library rules.
+  · The system updates the borrowing record.
+  · The system displays the new due date and confirmation.
+Alternative Flows:
+  · If the book is unavailable, the system does not allow issuing it.
+  · If the Library Member has outstanding restrictions, the system prevents borrowing.
+  · If a fine exists after a return, the system sends the fine record to Fine Management.
+  · If another member has an active reservation on the book, the system does not allow renewal.
+Postconditions:
+  · The borrowing or return transaction is recorded.
+  · Book availability and the Library Member's borrowing history are updated.
+Sequence Diagram -- UC-03 (Borrow Book flow)
+
+                          [ Insert sequence diagram here ] UC-03 (Borrow Book flow)
+
+Sequence Diagram -- UC-03 (Return Book flow)
+
+                          [ Insert sequence diagram here ] UC-03 (Return Book flow)
+
+Sequence Diagram -- UC-03 (Renew Book flow)
+
+                          [ Insert sequence diagram here ] UC-03 (Renew Book flow)
+
+UC-04: Manage Book Reservations
+
+Member: Wijewickrama S.N. -- IT25100467
+Primary Actor:
+Academic Staff Member (a type of Library Member)
+Supporting Actor:
+                                                                                                                                      SE2030 - Software Engineering
+
+Librarian
+Goal:
+Reserve an unavailable book and manage the reservation waiting list fairly.
+Preconditions:
+
+  · The Academic Staff Member is logged in.
+  · The selected book is currently unavailable.
+  · The Academic Staff Member has an active account.
+Main Flow:
+  · The Academic Staff Member searches for a book.
+  · The system displays that the book is unavailable.
+  · The Academic Staff Member selects "Reserve Book".
+  · The system checks whether the Academic Staff Member already has an active reservation for
+
+      the same book.
+  · The system adds the Academic Staff Member to the reservation waiting list.
+  · The system displays the reservation status and queue position.
+  · When a copy becomes available, the system notifies the next eligible Academic Staff Member
+
+      in the waiting list.
+  · The Librarian confirms the reserved-book allocation when the Academic Staff Member collects
+
+      it.
+Alternative Flows:
+
+  · If the book is available, the system suggests borrowing it instead of reserving it.
+  · If the Academic Staff Member already reserved the same book, the system displays an error.
+  · The Academic Staff Member may cancel the reservation before allocation.
+  · If the Academic Staff Member does not collect the book within the allowed period, the system
+
+      cancels the reservation and offers it to the next eligible person in the waiting list.
+Postconditions:
+
+  · The reservation status and waiting list are updated.
+  · The next eligible person receives priority when the book becomes available.
+Sequence Diagram -- UC-04: Manage Book Reservations
+
+                    [ Insert sequence diagram here ] UC-04: Manage Book Reservations
+
+UC-05: Manage Fines and Fine Payments
+                                                                                                                                      SE2030 - Software Engineering
+
+Member: Vithanage C.B. -- IT25102212
+
+Primary Actor:
+Finance Officer
+
+Supporting Actor:
+Librarian
+
+Goal:
+View overdue fines, verify automatically calculated fine amounts, record payments, and update
+payment status.
+
+Preconditions:
+  · The Finance Officer is logged in.
+  · A Library Member has an overdue-book fine or an existing unpaid fine record.
+
+Main Flow:
+  · The Finance Officer selects "Fine Management".
+  · The system displays outstanding fine records.
+  · The Finance Officer searches for a Library Member or selects a fine record.
+  · The system displays borrowing details, overdue days, calculated fine amount, and payment
+      status.
+  · The Finance Officer verifies the fine amount.
+  · The Library Member makes the payment.
+  · The Finance Officer records payment information.
+  · The system updates the payment status to paid or partially paid.
+  · The system stores the payment transaction.
+  · The system displays a payment confirmation.
+
+Alternative Flows:
+  · If no unpaid fine exists, the system displays "No outstanding fines".
+  · If the entered payment amount is less than the fine amount, the system records a partial
+      payment and retains the remaining balance.
+  · If the calculation is incorrect, the Finance Officer refers the record for correction before
+      accepting payment.
+
+Postconditions:
+  · Fine and payment records are updated.
+  · The Library Member's outstanding balance is accurate.
+
+Sequence Diagram -- UC-05: Manage Fines and Fine Payments
+                                                                                                                                      SE2030 - Software Engineering
+
+                 [ Insert sequence diagram here ] UC-05: Manage Fines and Fine Payments
+
+UC-06: Manage Fine Appeal and Waiver
+
+Member: Vithanage C.B. -- IT25102212
+Primary Actor:
+Library Member
+Supporting Actor:
+Finance Officer, Library Administrator
+Goal:
+Allow members to submit a fine appeal with a reason and view its status, and allow administrators
+to approve or reject the appeal, reduce or waive the fine, and record the decision.
+Preconditions:
+
+  · The Library Member is logged in.
+  · The Library Member has an existing unpaid or disputed fine.
+Main Flow:
+  · The Library Member selects "Appeal Fine" for a specific fine record.
+  · The Library Member enters the reason for the appeal.
+  · The Library Member submits the appeal.
+  · The system records the appeal with a "Pending" status.
+  · The Library Administrator, in consultation with the Finance Officer, reviews the appeal.
+  · The Library Administrator approves or rejects the appeal.
+  · If approved, the system reduces or waives the fine amount.
+  · The system records the decision and any comments.
+  · The system updates the appeal and fine status.
+  · The system notifies the Library Member of the outcome.
+Alternative Flows:
+  · If the appeal is rejected, the fine remains payable in full.
+  · The Finance Officer may refer a disputed calculation for correction before a decision is made.
+  · The Library Member may view the appeal status at any time.
+Postconditions:
+  · The fine appeal record and decision are stored.
+                                                                                                                                      SE2030 - Software Engineering
+
+  · The fine amount and status reflect the administrator's decision.
+Sequence Diagram -- UC-06: Manage Fine Appeal and Waiver
+
+                 [ Insert sequence diagram here ] UC-06: Manage Fine Appeal and Waiver
+
+UC-07: Manage Fine Payment and Receipt
+
+Member: Vithanage C.B. -- IT25102212
+Primary Actor:
+Library Member
+Supporting Actor:
+Finance Officer
+Goal:
+Allow members to make full or partial fine payments using a selected payment method, view
+remaining balance and payment history, and generate, view, or print a receipt.
+Preconditions:
+
+  · The Library Member is logged in.
+  · The Library Member has an outstanding fine.
+Main Flow:
+  · The Library Member selects "Pay Fine".
+  · The system displays the outstanding fine amount.
+  · The Library Member selects a payment method.
+  · The Library Member enters the payment amount (full or partial).
+  · The Library Member confirms the payment.
+  · The system processes the payment.
+  · The system calculates the remaining balance.
+  · The system updates the fine status to Paid or Partially Paid.
+  · The system generates a unique receipt.
+  · The system displays the receipt and updated balance to the Library Member.
+Alternative Flows:
+  · The Finance Officer may record a payment on behalf of the Library Member (e.g., a cash
+
+      payment at the counter).
+                                                                                                                                      SE2030 - Software Engineering
+
+  · If the payment amount is less than the fine amount, the system records a partial payment and
+      retains the remaining balance.
+
+  · The Library Member may view past payment history and reprint previous receipts at any time.
+Postconditions:
+
+  · The payment and receipt records are stored.
+  · The fine balance and status are accurate and up to date.
+Sequence Diagram -- UC-07: Manage Fine Payment and Receipt
+
+                [ Insert sequence diagram here ] UC-07: Manage Fine Payment and Receipt
+
+UC-08: Generate Reports and Analytics
+
+Member: Amukotuwa A.G.S.I. -- IT25100041
+Primary Actor:
+Library Administrator
+Supporting Actor:
+Librarian
+Goal:
+Generate reports to support library decisions.
+Preconditions:
+
+  · The user is logged in as a Library Administrator or Librarian.
+  · The system contains relevant book, borrowing, reservation, user, and fine data.
+Main Flow:
+  · The Library Administrator or Librarian selects "Reports and Analytics".
+  · The system displays available report types.
+  · The user selects a report, such as borrowed books, overdue books, fines, reservations, users,
+
+      or inventory.
+  · The user selects a date range or filtering criteria if required.
+  · The system retrieves relevant data.
+  · The system generates the selected report.
+  · The system displays the report with totals and relevant details.
+  · The user downloads or prints the report if needed.
+Alternative Flows:
+                                                                                                                                      SE2030 - Software Engineering
+
+  · If no records match the selected criteria, the system displays an empty-report message.
+  · If an invalid date range is entered, the system requests a valid range.
+  · The user may change report filters and regenerate the report.
+Postconditions:
+  · The requested report is available for viewing, downloading, or printing.
+  · Management can use the report for operational and financial decisions.
+Sequence Diagram -- UC-08: Generate Reports and Analytics
+
+                 [ Insert sequence diagram here ] UC-08: Generate Reports and Analytics
+
+UC-09: Manage Book Ratings and Reviews
+
+Member: Amukotuwa A.G.S.I. -- IT25100041
+Primary Actor:
+Library Member
+Supporting Actor:
+Library Administrator
+Goal:
+Allow members to rate and review previously borrowed books, edit or delete their own reviews, and
+allow administrators to remove inappropriate reviews.
+Preconditions:
+
+  · The Library Member is logged in.
+  · The Library Member has previously borrowed the book being reviewed.
+Main Flow:
+  · The Library Member selects a previously borrowed book.
+  · The Library Member selects "Add Rating and Review".
+  · The Library Member enters a rating and a written review.
+  · The Library Member submits the review.
+  · The system validates the review.
+  · The system saves the rating and review.
+  · The system displays the review on the book's catalog page.
+Alternative Flows:
+  · The Library Member may edit or delete their own review at any time.
+                                                                                                                                      SE2030 - Software Engineering
+
+  · If the Library Member has not borrowed the book, the system does not allow submitting a
+      review.
+
+  · The Library Administrator may remove a review that is inappropriate or violates guidelines.
+Postconditions:
+
+  · The book's rating and review list is updated.
+  · Other members and guest visitors can view the updated ratings and reviews.
+Sequence Diagram -- UC-09: Manage Book Ratings and Reviews
+
+                [ Insert sequence diagram here ] UC-09: Manage Book Ratings and Reviews
+
+UC-10: Manage Member Feedback
+
+Member: Amukotuwa A.G.S.I. -- IT25100041
+Primary Actor:
+Library Member
+Supporting Actor:
+Library Administrator
+Goal:
+Allow members to submit, view, and edit feedback about library services, and allow administrators
+to review, respond to, and manage feedback status.
+Preconditions:
+
+  · The Library Member is logged in.
+Main Flow:
+
+  · The Library Member selects "Submit Feedback".
+  · The Library Member enters feedback details.
+  · The Library Member submits the feedback.
+  · The system records the feedback with a "Pending" status.
+  · The Library Administrator reviews the submitted feedback.
+  · The Library Administrator responds to the feedback.
+  · The system updates the feedback status (e.g., Reviewed, Resolved).
+  · The system notifies the Library Member of the response.
+Alternative Flows:
+  · The Library Member may view or edit their own feedback before it is reviewed.
+                                                                                                                                      SE2030 - Software Engineering
+
+  · If required information is missing, the system requests the Library Member to complete it.
+  · The Library Administrator may mark feedback as low priority or close it without a response if
+
+      not actionable.
+Postconditions:
+
+  · The feedback record and its status are updated.
+  · The Library Member can view the current status and any administrator response.
+Sequence Diagram -- UC-10: Manage Member Feedback
+
+                     [ Insert sequence diagram here ] UC-10: Manage Member Feedback
+

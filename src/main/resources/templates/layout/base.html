@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<!--
+    Base application shell. A page never opens its own <html> for real —
+    it defines a <title> fragment named "title" and a body fragment named
+    "content" (see templates/home.html for the pattern), then replaces its
+    own root element with layout/base :: shell(~{::title}, ~{::#content}).
+    Thymeleaf resolves that th:replace before anything else, so the two
+    fragments the page supplied are the only part of it that survives —
+    everything below is what actually renders.
+
+    This is the standard library-free way to do template inheritance in
+    Thymeleaf 3 (a "layout dialect" library would do the same thing with
+    less boilerplate, but CLAUDE.md's dependency list for this project
+    stops at the eight named starters — nothing else).
+-->
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:fragment="shell(title, content)">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+
+    <!--
+        Reads the remembered theme choice and stamps data-theme on <html>
+        BEFORE the stylesheet paints anything. This has to be an inline,
+        blocking script in <head> — anywhere else and the page would flash
+        the wrong theme for a frame on every load. It fails silently if
+        localStorage is unavailable (a private window, cleared site data)
+        and just falls back to the OS preference, which app.css already
+        handles via prefers-color-scheme.
+    -->
+    <script>
+        (function () {
+            try {
+                var saved = localStorage.getItem('lms-theme');
+                if (saved === 'light' || saved === 'dark') {
+                    document.documentElement.setAttribute('data-theme', saved);
+                }
+            } catch (e) { /* localStorage unavailable — OS preference applies */ }
+        })();
+    </script>
+
+    <title th:replace="${title}">Library Management System</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" />
+</head>
+<body>
+    <div class="app-shell">
+        <div class="sidebar-scrim" id="sidebar-scrim" hidden></div>
+
+        <aside class="sidebar" id="sidebar" th:replace="~{components/sidebar :: sidebar}"></aside>
+
+        <div class="app-main">
+            <header th:replace="~{components/topbar :: topbar}"></header>
+
+            <main class="content">
+                <div th:replace="${content}">
+                    <!-- page content -->
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <div class="toast-region" id="toast-region" aria-live="polite" aria-atomic="false"></div>
+
+    <script th:src="@{/js/app-shell.js}"></script>
+</body>
+</html>

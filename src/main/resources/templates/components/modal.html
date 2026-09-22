@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<!--
+    Modal: raised, focus-trapped, Esc closes, returns focus on close. The
+    behaviour is shared JS ([data-modal-trigger]/[data-modal]/[data-modal-
+    close], see /static/js/app-shell.js §4) — this fragment only supplies
+    the markup that behaviour expects.
+
+    th:fragment="modal(id, title, bodyFragment, footerFragment)"
+
+    id             unique string. A button anywhere on the page opens this
+                   modal with data-modal-trigger="theId", or from your own
+                   JS with LMS.modal.open('theId').
+    title          modal heading.
+    bodyFragment   a fragment expression for the modal's content, called
+                   WITHOUT parameters so it inherits your page's model —
+                   same rule as data-table's rowFragment. E.g.
+                   ~{loans/detail :: renewalFormBody}.
+    footerFragment optional — a fragment expression for the footer buttons.
+                   Leave it null for no footer at all (a purely informational
+                   modal), or build your own Cancel/Confirm pair; for a
+                   plain "are you sure?" confirmation use
+                   components/confirm-dialog.html instead of this one.
+-->
+<div th:fragment="modal(id, title, bodyFragment, footerFragment)" class="modal-backdrop" th:data-modal="${id}" hidden>
+    <div class="modal" role="dialog" aria-modal="true" th:aria-labelledby="${id + '-title'}">
+        <div class="modal__header">
+            <h2 class="modal__title" th:id="${id + '-title'}" th:text="${title}">Title</h2>
+            <button type="button" class="icon-btn" data-modal-close aria-label="Close">
+                <svg class="icon" aria-hidden="true"><use href="/icons.svg#icon-x"></use></svg>
+            </button>
+        </div>
+        <div class="modal__body" th:insert="${bodyFragment}"></div>
+        <!-- th:if on its own wrapper, th:insert on the inner .modal__footer
+             — see data-table.html's empty-state comment for why these two
+             don't combine safely on one tag. -->
+        <div th:if="${footerFragment != null}">
+            <div class="modal__footer" th:insert="${footerFragment}"></div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

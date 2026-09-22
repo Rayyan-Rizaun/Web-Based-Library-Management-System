@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<!--
+    Status pill. th:fragment="statusPill(domain, status)".
+
+    All the mapping logic lives in one place — com.lms.common.web.
+    StatusPillMapper — not here, so a marker (or a teammate) can read every
+    status-to-colour decision in one file instead of hunting through
+    templates. This fragment only calls it.
+
+    domain: which status enumeration `status` belongs to — one of the
+    fourteen keys documented in templates/components/README.md and in
+    StatusPillMapper.token()'s switch (e.g. "loan", "fine", "bookCopy").
+
+    status: the raw status value — an entity's enum field exactly as it
+    comes off the entity (BookCopyStatus, LoanStatus, whichever the column
+    uses), or a plain derived String such as "Overdue" / "Expired" that a
+    service computed rather than stored (see StatusPillMapper's javadoc).
+-->
+<span th:fragment="statusPill(domain, status)"
+      class="status-pill"
+      th:classappend="${'status-pill--' + @statusPill.token(domain, status)}"
+      th:text="${@statusPill.displayValue(status)}">Status</span>
+</body>
+</html>

@@ -1,0 +1,40 @@
+# Library Management System — application configuration
+# IT2140/SE2030 · Group MLB-B11G2-10
+#
+# Local development credentials are defaulted below so the project runs on a
+# fresh clone. Any environment that matters overrides them with DB_USERNAME /
+# DB_PASSWORD environment variables rather than editing this file.
+
+spring:
+  application:
+    name: library-system
+
+  datasource:
+    # Fixed TCP port, not a named instance: SQL Server Express only answers
+    # instance-name lookups when the SQL Server Browser service is running,
+    # which produces a socket timeout when it isn't. Pinning IPAll to 1433 in
+    # SQL Server Configuration Manager removes that dependency.
+    # encrypt/trustServerCertificate are required by the modern mssql-jdbc
+    # driver against a local server with a self-signed certificate.
+    url: jdbc:sqlserver://localhost:1433;databaseName=LibraryDB;encrypt=true;trustServerCertificate=true
+    username: ${DB_USERNAME:lms_app}
+    password: ${DB_PASSWORD:Lms@2026Strong!}
+    driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+
+  jpa:
+    # CLAUDE.md rule 1: the schema lives ONLY in database/01_schema.sql.
+    # Hibernate must never generate or alter tables — it only checks that
+    # each @Entity matches what is already there and fails fast if not.
+    hibernate:
+      ddl-auto: validate
+    # Lazy associations must be resolved inside the @Transactional service
+    # method that needs them, not by the view during rendering — keeps
+    # database access out of Thymeleaf templates (CLAUDE.md rule 5).
+    open-in-view: false
+    show-sql: false
+
+  thymeleaf:
+    encoding: UTF-8
+
+server:
+  port: 8080

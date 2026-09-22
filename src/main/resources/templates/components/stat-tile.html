@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<!--
+    Stat tile — dashboards only, never inside a form or a list
+    (design-system.md §5).
+
+    statTileRow(tiles): the usual entry point. tiles is a
+    List<com.lms.common.web.StatTile>; see that record's javadoc.
+
+    statTile(label, value, overdue): the single tile, for the rare case of
+    one tile outside a row.
+
+    statTileRow does NOT call statTile per item via th:each — Thymeleaf
+    3.1's fragment-expression parser evaluates an inline ~{... ::
+    name(args)} expression's arguments before that same tag's own th:each
+    variable is in scope, so ${tile.label()} sees `tile` as null. (This is
+    why data-table's row fragment is instead passed in as a plain variable,
+    ${rowFragment}, with no inline arguments — see that fragment's header
+    comment.) statTileRow works around it by rendering the tile inline
+    instead of delegating to statTile for the looped case; the two stay in
+    sync because both are this short.
+-->
+<div th:fragment="statTileRow(tiles)" class="stat-tile-row">
+    <div th:each="tile : ${tiles}" class="stat-tile" th:classappend="${tile.overdue()} ? 'stat-tile--overdue' : ''">
+        <p class="stat-tile__label label-upper" th:text="${tile.label()}">Label</p>
+        <p class="stat-tile__value" th:text="${tile.value()}">0</p>
+    </div>
+</div>
+
+<div th:fragment="statTile(label, value, overdue)" class="stat-tile" th:classappend="${overdue} ? 'stat-tile--overdue' : ''">
+    <p class="stat-tile__label label-upper" th:text="${label}">Label</p>
+    <p class="stat-tile__value" th:text="${value}">0</p>
+</div>
+</body>
+</html>

@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<!--
+    Sidebar navigation. th:fragment="sidebar" — included by layout/base.html.
+
+    Role-aware visibility (design-system.md §4: "a Member never sees staff
+    sections at all") is real now: ${currentRoleNames} comes from
+    com.lms.common.web.CurrentUserAdvice, a Set of the signed-in user's
+    exact Role.RoleName values ("Librarian", "Library Administrator", …) —
+    see business-rules.md §8 for why those exact strings and not a ROLE_
+    prefix scheme. Each section below keeps the same gate this file
+    described as a future comment before UC-01 existed; only the mechanism
+    changed, not the policy. A staff-only section renders nothing at all
+    for a Member — not a disabled link, not an empty panel if they somehow
+    reach the URL directly, genuinely absent from the DOM — because the
+    matching URL is ALSO enforced server-side (SecurityConfig /
+    @PreAuthorize); hiding the link here is about not advertising a page
+    they will be turned away from, not the only thing standing in their way.
+
+    Active link: ${currentPath} comes from com.lms.common.web.CurrentPathAdvice.
+    A feature adding a link sets th:classappend the same way, e.g.
+    ${#strings.startsWith(currentPath, '/catalogue')} ? 'is-active'.
+
+    Responsive behaviour (icon rail <1024px, off-canvas <768px) is pure CSS
+    plus the small open/close toggle in app-shell.js — nothing here changes
+    per breakpoint.
+-->
+<aside class="sidebar" th:fragment="sidebar" id="sidebar">
+    <div class="sidebar__brand">
+        <svg class="icon" aria-hidden="true"><use href="/icons.svg#icon-library-big"></use></svg>
+        <span class="sidebar__brand-name">LMS</span>
+    </div>
+
+    <nav class="sidebar__nav" aria-label="Primary">
+
+        <div class="sidebar__section" th:if="${authenticated}">
+            <p class="sidebar__section-label label-upper">Overview</p>
+            <ul class="sidebar__list">
+                <li>
+                    <a th:href="@{/}" class="sidebar__link"
+                       th:classappend="${currentPath == '/'} ? 'is-active'"
+                       th:attr="aria-current=${currentPath == '/'} ? 'page'">
+                        <svg class="icon" aria-hidden="true"><use href="/icons.svg#icon-layout-dashboard"></use></svg>
+                        <span class="sidebar__label">Dashboard</span>
+                    </a>
+                </li>
+                <li>
+                    <a th:href="@{/account}" class="sidebar__link"
+                       th:classappend="${currentPath == '/account'} ? 'is-active'"
+                       th:attr="aria-current=${currentPath == '/account'} ? 'page'">
+                        <svg class="icon" aria-hidden="true"><use href="/icons.svg#icon-circle-user"></use></svg>
+                        <span class="sidebar__label">My Account</span>
+                    </a>
+                </li>
+                <!-- UC-10 submit-feedback flow (com.lms.feedback) — a
+                     member's own view of their submissions, distinct from
+                     the staff-only "Feedback" link under Insights below
+                     (which manages everyone's). -->
+                <li>
+                    <a th:href="@{/feedback}" class="sidebar__link"
+                       th:classappend="${#strings.startsWith(currentPath, '/feedback')} ? 'is-active'"
+                       th:attr="aria-current=${#strings.startsWith(currentPath, '/feedback')} ? 'page'">
+                        <svg class="icon" aria-hidden="true"><use href="/icons.svg#icon-message-square"></use></svg>
+                        <span class="sidebar__label">My Feedback</span>
+                    </a>
+                </li>
+                <!-- UC-07 (com.lms.fine) — a member's own fines, distinct
+                     from the staff-only "Fines & Payments" link in the
+                     Finance section below (which manages everyone's). -->
+                <li>
+                    <a th:href="@{/fines/mine}" class="sidebar__link"
+                       th:classappend="${#strings.startsWith(currentPath, '/fines/mine')} ? 'is-active'"
+                       th:attr="aria-current=${#strings.startsWith(currentPath, '/fines/mine')} ? 'page'">
+                        <svg class="icon" aria-hidden="true"><use href="/icons.svg#icon-wallet"></use></svg>
+                        <span class="sidebar__label">My Fines</span>
+                    </a>
+                </li>
+                <!-- UC-09 (com.lms.review) — a member's own ratings and
+                     reviews, distinct from the staff-only "Reviews" link
+                     under Insights below (which moderates everyone's). -->
+                <li>
+                    <a th:href="@{/reviews}" class="sidebar__link"
+                       th:classappend="${currentPath == '/reviews'} ? 'is-active'"
+                       th:attr="aria-current=${currentPath == '/reviews'} ? 'page'">
+                        <svg class="icon" aria-hidden="true"><use href="/icons.svg#icon-star"></use></svg>
+                        <span class="sidebar__label">My Reviews</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- UC-02 / PB-22, PB-23: Books is public — a guest browses the
+             catalogue without logging in, so unlike every other section on
+             this page, this one is NOT gated on ${authenticated}. Authors /
+             Categories / Publishers are catalogue reference-data management
+             screens, not browsing, so each of those stays staff-only
+             (Librarian / Library Administrator — the same two roles
+             com.lms.catalogue.BookService's @PreAuthorize checks). -->
+        <div class="sidebar__section"
+             th:with="isCatalogueStaff=${authenticated and (currentRoleNames.contains('Librarian') or currentRoleNames.contains('Library Administrator'))}">
+            <p class="sidebar__section-label label-upper">Catalogue</p>
+            <ul class="sidebar__list">
+                <li>
+                    <a th:href="@{/catalogue/books}" class="sidebar__link"
+                       th:classappend="${#strings.startsWith(currentPath, '/catalogue/books')} ? 'is-active'"
+                       th:attr="aria-current=${#strings.startsWith(currentPath, '/catalogue/books')} ? 'page'">
+                        <svg class="icon" aria-hidden="true"><use href="/icons.svg#icon-book-open"></use></svg>
+                        <span class="sidebar__label">Books</span>
+                    </a>
+                </li>
+                <li th:if="${isCatalogueStaff}">
+                    <a th:href="@{/catalogue/authors}" class="sidebar__link"
+                       th:classappend="${currentPath == '/catalogue/authors'} ? 'is-active'"
+                       th:attr="aria-current=${currentPath == '/catalogue/authors'} ? 'page'">
+                        <svg class="icon" aria-hidden="true"><use href="/icons.svg#icon-user"></use></svg>
+                        <span class="sidebar__label">Authors</span>
+                    </a>
+                </li>
+                <li th:if="${isCatalogueStaff}">
+                    <a th:href="@{/catalogue/categories}" class="sidebar__link"
+                       th:classappend="${currentPath == '/catalogue/categories'} ? 'is-active'"
+                       th:attr="aria-current=${currentPath == '/catalogue/categories'} ? 'page'">
+                        <svg class="icon" aria-hidden="true"><use href="/icons.svg#icon-tag"></use></svg>
+                        <span class="sidebar__label">Categories</span>
+                    </a>
+                </li>
+                <li th:if="${isCatalogueStaff}">
+                    <a th:href="@{/catalogue/publishers}" class="sidebar__link"
+                       th:classappend="${currentPath == '/catalogue/publishers'} ? 'is-active'"
+                       th:attr="aria-current=${currentPath == '/catalogue/publishers'} ? 'page'">
+                        <svg class="icon" aria-hidden="true"><use href="/icons.svg#icon-building"></use></svg>
+                        <span class="sidebar__label">Publishers</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Borrowing & Returns and Reservation Queue are both staff-only
+             desk actions (UC-03 issue-a-book, UC-04's own queue screen),
+             gated the same way as com.lms.catalogue's staff-only links —
+             Librarian / Library Administrator, matching LoanController's
+             and ReservationController's own @PreAuthorize. My Reservations
+             is a member's own view, so it keeps the section's
+             all-signed-in-roles gate instead. -->
+        <div class="sidebar__section" th:if="${authenticated}"
+             th:with="isCirculationStaff=${currentRoleNames.contains('Librarian') or currentRoleNames.contains('Library Administrator')}">
+            <p class="sidebar__section-label label-upper">Circulation</p>
+            <ul class="sidebar__list">
+                <li th:if="${isCirculationStaff}">
+                    <a th:href="@{/borrowing/loans}" class="sidebar__link"
+                       th:classappend="${currentPath == '/borrowing/loans' or #strings.startsWith(currentPath, '/borrowing/issue')} ? 'is-active'"
+                       th:attr="aria-current=${currentPath == '/borrowing/loans' or #strings.startsWith(currentPath, '/borrowing/issue')} ? 'page'">
+                        <svg class="icon" aria-hidden="true"><use href="/icons.svg#icon-arrow-left-right"></use></svg>
+                        <span class="sidebar__label">Borrowing &amp; Returns</span>
+                    </a>
+                </li>
+                <!-- UC-03 return flow — Loan History, a separate screen
+                     from Current Loans above, so it gets its own nav entry
+                     and its own active-state check (currentPath starting
+                     with '/borrowing/loans' alone would also match this
+                     page's own '/borrowing/history', so each link checks
+                     only its own path prefix). -->
+                <li th:if="${isCirculationStaff}">
+                    <a th:href="@{/borrowing/history}" class="sidebar__link"
+                       th:classappend="${#strings.startsWith(currentPath, '/borrowing/history')} ? 'is-active'"
+                       th:attr="aria-current=${#strings.startsWith(currentPath, '/borrowing/history')} ? 'page'">
+                        <svg class="icon" aria-hidden="true"><use href="/icons.svg#icon-archive"></use></svg>
+                        <span class="sidebar__label">Loan History</span>
+                    </a>
+                </li>
+                <li>
+                    <a th:href="@{/borrowing/my-loans}" class="sidebar__link"
+                       th:classappend="${#strings.startsWith(currentPath, '/borrowing/my-loans')} ? 'is-active'"
+                       th:attr="aria-current=${#strings.startsWith(currentPath, '/borrowing/my-loans')} ? 'page'">
+                        <svg class="icon" aria-hidden="true"><use href="/icons.svg#icon-book-open"></use></svg>
+                        <span class="sidebar__label">My Loans</span>
+                    </a>
+                </li>
+                <li th:if="${isCirculationStaff}">
+                    <a th:href="@{/reservations/queue}" class="sidebar__link"
+                       th:classappend="${currentPath == '/reservations/queue'} ? 'is-active'"
+                       th:attr="aria-current=${currentPath == '/reservations/queue'} ? 'page'">
+                        <svg class="icon" aria-hidden="true"><use href="/icons.svg#icon-users"></use></svg>
+                        <span class="sidebar__label">Reservation Queue</span>
+                    </a>
+                </li>
+                <!-- UC-04 (com.lms.reservation) — "My Reservations", a
+                     member's own view. -->
+                <li>
+                    <a th:href="@{/reservations}" class="sidebar__link"
+                       th:classappend="${currentPath == '/reservations'} ? 'is-active'"
+                       th:attr="aria-current=${currentPath == '/reservations'} ? 'page'">
+                        <svg class="icon" aria-hidden="true"><use href="/icons.svg#icon-calendar-clock"></use></svg>
+                        <span class="sidebar__label">Reservations</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Fines & Payments and Fine Appeals (com.lms.fine, UC-05/06/07)
+             are both staff-side screens — Finance Officer / Librarian /
+             Library Administrator, matching FineController's own
+             @PreAuthorize. Each link's own active-state check excludes the
+             other's path prefix (and My Fines' '/fines/mine' above) so
+             only one lights up at a time — same fix already applied to
+             Borrowing & Returns vs Loan History. -->
+        <div class="sidebar__section"
+             th:if="${authenticated and (currentRoleNames.contains('Finance Officer')
+                                          or currentRoleNames.contains('Librarian')
+                                          or currentRoleNames.contains('Library Administrator'))}">
+            <p class="sidebar__section-label label-upper">Finance</p>
+            <ul class="sidebar__list">
+                <li>
+                    <a th:href="@{/fines}" class="sidebar__link"
+                       th:classappend="${#strings.startsWith(currentPath, '/fines') and not #strings.startsWith(currentPath, '/fines/mine') and not #strings.startsWith(currentPath, '/fines/appeals')} ? 'is-active'"
+                       th:attr="aria-current=${#strings.startsWith(currentPath, '/fines') and not #strings.startsWith(currentPath, '/fines/mine') and not #strings.startsWith(currentPath, '/fines/appeals')} ? 'page'">
+                        <svg class="icon" aria-hidden="true"><use href="/icons.svg#icon-wallet"></use></svg>
+                        <span class="sidebar__label">Fines &amp; Payments</span>
+                    </a>
+                </li>
+                <li>
+                    <a th:href="@{/fines/appeals}" class="sidebar__link"
+                       th:classappend="${#strings.startsWith(currentPath, '/fines/appeals')} ? 'is-active'"
+                       th:attr="aria-current=${#strings.startsWith(currentPath, '/fines/appeals')} ? 'page'">
+                        <svg class="icon" aria-hidden="true"><use href="/icons.svg#icon-octagon-alert"></use></svg>
+                        <span class="sidebar__label">Fine Appeals</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- staff only — a Library Member gets none of this section, not a
+             disabled version of it (design-system.md §4). Feedback has its
+             own, narrower gate: UC-10's own scenario names Library
+             Administrator as the only supporting actor for reviewing
+             feedback (docs/scenarios.pdf), unlike Reports/Reviews below
+             which stay open to the section's broader staff gate — splitting
+             it out avoids the "sees the link, gets Access Denied" gap this
+             session has already found and fixed in other features. -->
+        <div class="sidebar__section"
+             th:if="${authenticated and (currentRoleNames.contains('Librarian')
+                                          or currentRoleNames.contains('Finance Officer')
+                                          or currentRoleNames.contains('Library Administrator'))}">
+            <p class="sidebar__section-label label-upper">Insights</p>
+            <ul class="sidebar__list">
+                <li th:if="${currentRoleNames.contains('Librarian') or currentRoleNames.contains('Library Administrator')}">
+                    <a th:href="@{/reports}" class="sidebar__link"
+                       th:classappend="${#strings.startsWith(currentPath, '/reports')} ? 'is-active'"
+                       th:attr="aria-current=${#strings.startsWith(currentPath, '/reports')} ? 'page'">
+                        <svg class="icon" aria-hidden="true"><use href="/icons.svg#icon-chart-column"></use></svg>
+                        <span class="sidebar__label">Reports</span>
+                    </a>
+                </li>
+                <li th:if="${currentRoleNames.contains('Library Administrator')}">
+                    <a th:href="@{/reviews/moderation}" class="sidebar__link"
+                       th:classappend="${#strings.startsWith(currentPath, '/reviews/moderation')} ? 'is-active'"
+                       th:attr="aria-current=${#strings.startsWith(currentPath, '/reviews/moderation')} ? 'page'">
+                        <svg class="icon" aria-hidden="true"><use href="/icons.svg#icon-star"></use></svg>
+                        <span class="sidebar__label">Reviews</span>
+                    </a>
+                </li>
+                <li th:if="${currentRoleNames.contains('Library Administrator')}">
+                    <a th:href="@{/feedback/manage}" class="sidebar__link"
+                       th:classappend="${#strings.startsWith(currentPath, '/feedback/manage')} ? 'is-active'"
+                       th:attr="aria-current=${#strings.startsWith(currentPath, '/feedback/manage')} ? 'page'">
+                        <svg class="icon" aria-hidden="true"><use href="/icons.svg#icon-message-square"></use></svg>
+                        <span class="sidebar__label">Feedback</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- administrator only -->
+        <div class="sidebar__section" th:if="${authenticated and currentRoleNames.contains('Library Administrator')}">
+            <p class="sidebar__section-label label-upper">Administration</p>
+            <ul class="sidebar__list">
+                <li>
+                    <a th:href="@{/users}" class="sidebar__link"
+                       th:classappend="${#strings.startsWith(currentPath, '/users')} ? 'is-active'"
+                       th:attr="aria-current=${#strings.startsWith(currentPath, '/users')} ? 'page'">
+                        <svg class="icon" aria-hidden="true"><use href="/icons.svg#icon-users"></use></svg>
+                        <span class="sidebar__label">Users &amp; Roles</span>
+                        <span class="notification-badge" style="position:static; transform:none; margin-inline-start:auto;"
+                              th:if="${(pendingMemberCount ?: 0) > 0}" th:text="${pendingMemberCount}">3</span>
+                    </a>
+                </li>
+                <li>
+                    <a th:href="@{/admin/settings}" class="sidebar__link"
+                       th:classappend="${#strings.startsWith(currentPath, '/admin/settings')} ? 'is-active'"
+                       th:attr="aria-current=${#strings.startsWith(currentPath, '/admin/settings')} ? 'page'">
+                        <svg class="icon" aria-hidden="true"><use href="/icons.svg#icon-settings"></use></svg>
+                        <span class="sidebar__label">System Settings</span>
+                    </a>
+                </li>
+                <li>
+                    <a th:href="@{/admin/logs}" class="sidebar__link"
+                       th:classappend="${#strings.startsWith(currentPath, '/admin/logs')} ? 'is-active'"
+                       th:attr="aria-current=${#strings.startsWith(currentPath, '/admin/logs')} ? 'page'">
+                        <svg class="icon" aria-hidden="true"><use href="/icons.svg#icon-archive"></use></svg>
+                        <span class="sidebar__label">System Logs</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+</aside>
+</body>
+</html>
