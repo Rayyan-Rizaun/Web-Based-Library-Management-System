@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<!--
+    Hand-built table and pagination, not components/data-table's or
+    components/pagination's own links — this screen filters (q/status/type/
+    from/to) AND paginates, and per templates/components/README.md that
+    combination needs its own links so a page click cannot drop the current
+    filter or tab.
+-->
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: shell(~{::title}, ~{::#content})}">
+<head>
+    <title th:text="${pageTitle} + ' · Library Management System'">System Logs · Library Management System</title>
+</head>
+<body>
+<div id="content">
+
+    <div th:replace="~{components/toast :: flash(${flashSuccessTitle}, ${flashSuccessMessage}, ${flashErrorTitle}, ${flashErrorMessage})}"></div>
+
+    <div th:replace="~{components/page-header :: pageHeader('System Logs', 'Every row here is written by the system. Nothing in this section can be created, changed or deleted by hand.', 'System Settings', @{/admin/settings}, null)}"></div>
+
+    <section class="panel">
+        <div class="panel__body">
+            <div class="cluster">
+                <a th:href="@{/admin/logs(tab='audit')}" class="btn" th:classappend="${tab == 'audit'} ? 'btn--primary' : 'btn--secondary'">Audit Log</a>
+                <a th:href="@{/admin/logs(tab='failed-logins')}" class="btn" th:classappend="${tab == 'failed-logins'} ? 'btn--primary' : 'btn--secondary'">Failed Login Attempts</a>
+                <a th:href="@{/admin/logs(tab='backups')}" class="btn" th:classappend="${tab == 'backups'} ? 'btn--primary' : 'btn--secondary'">Database Backup Log</a>
+            </div>
+        </div>
+    </section>
+
+    <section class="panel">
+        <div class="panel__body">
+            <form method="get" th:action="@{/admin/logs}" class="cluster" style="align-items:flex-end;">
+                <input type="hidden" name="tab" th:value="${tab}" />
+                <div class="form-field" style="flex:2 1 220px; margin:0;" th:if="${tab == 'audit'}">
+                    <label class="form-field__label" for="q">Search</label>
+                    <input type="search" id="q" name="q" th:value="${q}" class="form-field__input" placeholder="User, action or entity" />
+                </div>
+                <div class="form-field" style="flex:2 1 220px; margin:0;" th:if="${tab == 'failed-logins'}">
+                    <label class="form-field__label" for="q">Search</label>
+                    <input type="search" id="q" name="q" th:value="${q}" class="form-field__input" placeholder="Email tried" />
+                </div>
+                <div class="form-field" style="flex:1 1 160px; margin:0;" th:if="${tab == 'backups'}">
+                    <label class="form-field__label" for="status">Status</label>
+                    <select id="status" name="status" class="form-field__select">
+                        <option th:each="opt : ${statusOptions}" th:value="${opt.value()}" th:text="${opt.label()}"
+                                th:selected="${opt.value() == (status != null ? status : '')}">Status</option>
+                    </select>
+                </div>
+                <div class="form-field" style="flex:1 1 160px; margin:0;" th:if="${tab == 'backups'}">
+                    <label class="form-field__label" for="type">Type</label>
+                    <select id="type" name="type" class="form-field__select">
+                        <option th:each="opt : ${typeOptions}" th:value="${opt.value()}" th:text="${opt.label()}"
+                                th:selected="${opt.value() == (type != null ? type : '')}">Type</option>
+                    </select>
+                </div>
+                <div class="form-field" style="margin:0;">
+                    <label class="form-field__label" for="from">From</label>
+                    <input type="date" id="from" name="from" th:value="${from}" class="form-field__input" />
+                </div>
+                <div class="form-field" style="margin:0;">
+                    <label class="form-field__label" for="to">To</label>
+                    <input type="date" id="to" name="to" th:value="${to}" class="form-field__input" />
+                </div>
+                <button type="submit" class="btn btn--primary">
+                    <svg class="icon icon--sm" aria-hidden="true"><use href="/icons.svg#icon-search"></use></svg>
+                    Search
+                </button>
+            </form>
+        </div>
+    </section>
+
+    <section class="panel">
+        <div th:if="${not #lists.isEmpty(rows)}" class="data-table-container">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th th:each="col : ${columns}" scope="col"
+                            th:classappend="${col.align() == 'right'} ? 'data-table__col-right' : ''"
+                            th:text="${col.label()}">Label</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <th:block th:if="${tab == 'audit'}" th:each="row : ${rows}">
+                        <tr th:replace="~{admin/logs-fragments :: auditRow}"></tr>
+                    </th:block>
+                    <th:block th:if="${tab == 'failed-logins'}" th:each="row : ${rows}">
+                        <tr th:replace="~{admin/logs-fragments :: failedLoginRow}"></tr>
+                    </th:block>
+                    <th:block th:if="${tab == 'backups'}" th:each="row : ${rows}">
+                        <tr th:replace="~{admin/logs-fragments :: backupRow}"></tr>
+                    </th:block>
+                </tbody>
+            </table>
+        </div>
+
+        <div th:if="${#lists.isEmpty(rows)}">
+            <div th:replace="~{components/empty-state :: emptyState('archive', 'No log entries match your filters.', null, null)}"></div>
+        </div>
+
+        <nav th:if="${not #lists.isEmpty(rows)}" class="pagination" aria-label="Pagination"
+             th:with="windowStart=${T(java.lang.Math).max(1, page - 2)},
+                      windowEnd=${T(java.lang.Math).min(totalPages, page + 2)}">
+            <p class="pagination__range">
+                Showing <span class="font-mono" th:text="${firstItem} + '–' + ${lastItem}">1–20</span>
+                of <span class="font-mono" th:text="${totalItems}">214</span>
+            </p>
+            <div class="pagination__controls">
+                <a th:if="${page > 1}" class="icon-btn" aria-label="Previous page"
+                   th:href="@{/admin/logs(tab=${tab}, q=${q}, status=${status}, type=${type}, from=${from}, to=${to}, page=${page - 1})}">
+                    <svg class="icon" aria-hidden="true"><use href="/icons.svg#icon-chevron-left"></use></svg>
+                </a>
+                <button th:unless="${page > 1}" type="button" class="icon-btn" disabled aria-label="Previous page">
+                    <svg class="icon" aria-hidden="true"><use href="/icons.svg#icon-chevron-left"></use></svg>
+                </button>
+
+                <a th:each="p : ${#numbers.sequence(windowStart, windowEnd)}" th:text="${p}"
+                   th:href="@{/admin/logs(tab=${tab}, q=${q}, status=${status}, type=${type}, from=${from}, to=${to}, page=${p})}"
+                   class="pagination__page" th:classappend="${p == page} ? 'is-current' : ''"
+                   th:attr="aria-current=${p == page} ? 'page' : null">1</a>
+
+                <a th:if="${page < totalPages}" class="icon-btn" aria-label="Next page"
+                   th:href="@{/admin/logs(tab=${tab}, q=${q}, status=${status}, type=${type}, from=${from}, to=${to}, page=${page + 1})}">
+                    <svg class="icon" aria-hidden="true"><use href="/icons.svg#icon-chevron-right"></use></svg>
+                </a>
+                <button th:unless="${page < totalPages}" type="button" class="icon-btn" disabled aria-label="Next page">
+                    <svg class="icon" aria-hidden="true"><use href="/icons.svg#icon-chevron-right"></use></svg>
+                </button>
+            </div>
+        </nav>
+    </section>
+
+</div>
+</body>
+</html>

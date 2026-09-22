@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<tr th:fragment="settingRow" th:with="modalId=${'edit-' + #strings.replace(#strings.replace(row.settingKey(),'.','-'),' ','-')}">
+    <td class="font-mono" th:text="${row.settingKey()}">Loan.PeriodDays</td>
+    <td class="data-table__col-right font-mono" th:text="${row.settingValue()}">14</td>
+    <td th:text="${row.dataType()}">Int</td>
+    <td th:text="${row.description()}">Days from issue to due date.</td>
+    <td th:text="${row.updatedByName()}">System</td>
+    <td class="data-table__col-right font-mono" th:text="${#temporals.format(row.updatedAt(), 'yyyy-MM-dd HH:mm')}">2026-01-01 00:00</td>
+    <td>
+        <button type="button" class="btn btn--secondary" th:attr="data-modal-trigger=${modalId}">Edit</button>
+
+        <div class="modal-backdrop" th:attr="data-modal=${modalId}" hidden>
+            <form class="modal" role="dialog" aria-modal="true"
+                  th:attr="aria-labelledby=${modalId + '-title'}"
+                  th:action="@{/admin/settings/{key}(key=${row.settingKey()})}" method="post">
+                <div class="modal__header">
+                    <h2 class="modal__title" th:id="${modalId + '-title'}" th:text="${'Edit ' + row.settingKey()}">Edit setting</h2>
+                    <button type="button" class="icon-btn" data-modal-close aria-label="Close">
+                        <svg class="icon" aria-hidden="true"><use href="/icons.svg#icon-x"></use></svg>
+                    </button>
+                </div>
+                <div class="modal__body">
+                    <p style="margin-bottom: var(--space-16);" th:text="${row.description()}">Description.</p>
+                    <div class="form-field">
+                        <label class="form-field__label" th:for="${modalId + '-value'}" th:text="${'Value (' + row.dataType() + ') *'}">Value *</label>
+                        <input type="text" th:id="${modalId + '-value'}" name="value" th:value="${row.settingValue()}" required
+                               class="form-field__input" />
+                    </div>
+                </div>
+                <div class="modal__footer">
+                    <button type="button" class="btn btn--secondary" data-modal-close>Cancel</button>
+                    <button type="submit" class="btn btn--primary">Save</button>
+                </div>
+            </form>
+        </div>
+    </td>
+</tr>
+
+</body>
+</html>

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<!--
+    403 target for SecurityConfig's exceptionHandling().accessDeniedPage(...).
+    Only reached by a signed-in user who lacks the authority for what they
+    tried — an anonymous visitor is redirected to /login instead — so this
+    renders inside the normal shell, with their own (role-filtered)
+    sidebar still there to navigate away with.
+-->
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: shell(~{::title}, ~{::#content})}">
+<head>
+    <title>Access denied · Library Management System</title>
+</head>
+<body>
+<div id="content">
+
+    <div th:replace="~{components/page-header :: pageHeader('Access denied', null, null, null, null)}"></div>
+
+    <!-- No apostrophe in this string — see register.html's comment on why:
+         a ~{...} fragment expression's argument list does not honour \'
+         escaping, so attoparser fails to parse the whole expression. -->
+    <section class="panel">
+        <div th:replace="~{components/empty-state :: emptyState('shield-x',
+                'You do not have permission to view that page.', 'Back to Dashboard', @{/})}"></div>
+    </section>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: shell(~{::title}, ~{::#content})}">
+<head>
+    <title th:text="${pageTitle} + ' · Library Management System'">System Settings · Library Management System</title>
+</head>
+<body>
+<div id="content">
+
+    <div th:replace="~{components/toast :: flash(${flashSuccessTitle}, ${flashSuccessMessage}, ${flashErrorTitle}, ${flashErrorMessage})}"></div>
+
+    <div th:replace="~{components/page-header :: pageHeader('System Settings', 'These values drive the loan period, fine rate, borrowing limits, renewal cap and reservation hold window used throughout the system.', 'System Logs', @{/admin/logs}, null)}"></div>
+
+    <section class="panel" th:each="group : ${groups}">
+        <div class="panel__header">
+            <h2 class="panel__title" th:text="${group.prefix()}">Loan</h2>
+        </div>
+        <div th:replace="~{components/data-table :: dataTable(${columns}, ${group.rows()}, ~{admin/settings-fragments :: settingRow},
+                null, null, 'settings', 'No settings in this group.', null, null)}"></div>
+    </section>
+
+</div>
+</body>
+</html>

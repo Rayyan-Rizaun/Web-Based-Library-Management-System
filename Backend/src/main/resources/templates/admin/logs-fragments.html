@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<tr th:fragment="auditRow">
+    <td th:text="${row.userName()}">System</td>
+    <td th:text="${row.actionName()}">UPDATE</td>
+    <td th:text="${row.entityName()}">SystemSetting</td>
+    <td class="font-mono" th:text="${row.entityId()} ?: '—'">—</td>
+    <td class="data-table__col-right font-mono" th:text="${#temporals.format(row.occurredAt(), 'yyyy-MM-dd HH:mm:ss')}">2026-01-01 00:00:00</td>
+</tr>
+
+<tr th:fragment="failedLoginRow">
+    <td th:text="${row.emailTried()}">someone@example.com</td>
+    <td th:text="${row.reason()}">BadPassword</td>
+    <td class="font-mono" th:text="${row.ipAddress()}">192.168.1.1</td>
+    <td class="data-table__col-right font-mono" th:text="${#temporals.format(row.attemptedAt(), 'yyyy-MM-dd HH:mm:ss')}">2026-01-01 00:00:00</td>
+</tr>
+
+<tr th:fragment="backupRow">
+    <td th:text="${row.backupType()}">Full</td>
+    <td><span th:replace="~{components/status-pill :: statusPill('backup', ${row.status()})}"></span></td>
+    <td class="data-table__col-right font-mono" th:text="${#temporals.format(row.startedAt(), 'yyyy-MM-dd HH:mm')}">2026-01-01 00:00</td>
+    <td class="data-table__col-right font-mono" th:text="${row.duration()}">15m 0s</td>
+    <td th:text="${row.errorMessage()} ?: '—'">—</td>
+</tr>
+
+</body>
+</html>
